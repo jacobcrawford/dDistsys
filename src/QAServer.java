@@ -37,7 +37,8 @@ public class QAServer {
                     BufferedReader stdin = new BufferedReader(stream);
 
                     while (socket.isConnected()) {
-                        qa = (QA) questions.take();
+                        qa =  questions.take();
+                        //Empty the system.in stream so we only get the string after the question is asked.
                         while (stream.ready()) {
                             String ans = stdin.readLine();
                         }
