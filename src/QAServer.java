@@ -22,7 +22,7 @@ public class QAServer {
             Socket socket = waitForConnectionFromClient();
 
             if (socket != null) {
-                LinkedBlockingQueue questions = new LinkedBlockingQueue();
+                LinkedBlockingQueue<QA> questions = new LinkedBlockingQueue<>();
                 if (questionListener == null) {
                     questionListener=createQuestionListenerThread(socket,questions);
                     questionListener.start();
@@ -64,12 +64,18 @@ public class QAServer {
         System.out.println("Goodbuy world!");
     }
 
-    public Thread createQuestionListenerThread(Socket socket,LinkedBlockingQueue questions){
+    public Thread createQuestionListenerThread(Socket socket, LinkedBlockingQueue<QA> questions){
         return new Thread(()->{
             try {
                 ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
                 while(socket.isConnected()){
-                    questions.add((QA)fromClient.readObject());
+                    Object o = fromClient.readObject();
+                    if (o instanceof QA){
+                        QA qa = (QA)o;
+                        questions.add(qa);
+                    }else{
+                        System.out.println("Object from client was not QA");
+                    }
                 }
                 fromClient.close();
 
