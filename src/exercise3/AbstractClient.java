@@ -12,7 +12,7 @@ public class AbstractClient extends AbstractNetworkUnit {
         super(portNumber);
     }
 
-    protected Socket connectToServer(String serverName) {
+    public Socket connectToServer(String serverName) {
         Socket res = null;
         try {
             res = new Socket(serverName, serverPortNumber);

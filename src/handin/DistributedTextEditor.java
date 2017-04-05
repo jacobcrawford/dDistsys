@@ -1,5 +1,8 @@
 package handin;
 
+import exercise3.AbstractClient;
+import exercise3.AbstractServer;
+
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.DefaultEditorKit;
@@ -8,8 +11,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
+import java.net.Socket;
 
 public class DistributedTextEditor extends JFrame {
 
@@ -19,7 +22,7 @@ public class DistributedTextEditor extends JFrame {
     private Action Copy;
     private Action Paste;
     private JTextArea area2;
-    private JTextField ipaddress;
+    private JTextField ipAddress;
     private JTextField portNumber;
     private EventReplayer er;
     private Thread ert;
@@ -62,9 +65,9 @@ public class DistributedTextEditor extends JFrame {
                         JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         content.add(scroll2, BorderLayout.CENTER);
 
-        ipaddress = new JTextField("IP address here");
-        content.add(ipaddress, BorderLayout.CENTER);
-        portNumber = new JTextField("Port number here");
+        ipAddress = new JTextField("localhost");
+        content.add(ipAddress, BorderLayout.CENTER);
+        portNumber = new JTextField("40499");
         content.add(portNumber, BorderLayout.CENTER);
 
         JMenuBar JMB = new JMenuBar();
@@ -75,6 +78,7 @@ public class DistributedTextEditor extends JFrame {
         JMB.add(edit);
 
 
+        file.add(Listen);
         file.add(Connect);
         file.add(Disconnect);
         file.addSeparator();
@@ -147,7 +151,80 @@ public class DistributedTextEditor extends JFrame {
         Copy = m.get(DefaultEditorKit.copyAction);
         Paste = m.get(DefaultEditorKit.pasteAction);
 
+        Listen = new AbstractAction("Listen") {
+            public void actionPerformed(ActionEvent e) {
+                saveOld();
+                area1.setText("");
+                new Thread(() -> {
+                    AbstractServer server = new AbstractServer(getPortNumber());
+                    server.registerOnPort();
+                    setTitle("I'm listening on " + server.getLocalHostAddress() + " on port " + getPortNumber());
+                    Socket socket = server.waitForConnectionFromClient();
 
+                    try {
+                        final ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
+                        while (socket.isConnected()) {
+                            Object o = fromClient.readObject();
+                            if (o instanceof MyTextEvent) {
+                                MyTextEvent event = (MyTextEvent) o;
+                                dec.addMyTextEvent(event);
+                            } else {
+                                System.out.println("Unreadable object reveived");
+                            }
+                        }
+                        fromClient.close();
+
+                    } catch (EOFException ex) {
+                        System.out.println("Connection to client was broken");
+                    } catch (IOException | ClassNotFoundException ex) {
+                        ex.printStackTrace();
+                    }
+
+
+                }).start();
+
+                changed = false;
+                Save.setEnabled(false);
+                SaveAs.setEnabled(false);
+            }
+        };
+
+        Connect = new AbstractAction("Connect") {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new Thread(() -> {
+                    saveOld();
+                    area1.setText("");
+                    AbstractClient client = new AbstractClient(getPortNumber());
+                    Socket socket = client.connectToServer(getIP());
+                    setTitle("Connected to " + getIP() + " on port " + getPortNumber());
+
+                    final ObjectOutputStream outputStream;
+                    try {
+                        outputStream = new ObjectOutputStream(socket.getOutputStream());
+                        while (socket.isConnected()) {
+                            try {
+                                outputStream.writeObject(dec.take());
+                            } catch (IOException | InterruptedException ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+
+                }).start();
+
+            }
+        };
+    }
+
+    private int getPortNumber() {
+        return Integer.parseInt(portNumber.getText());
+    }
+
+    private String getIP() {
+        return ipAddress.getText();
     }
 
     private void saveFileAs() {
