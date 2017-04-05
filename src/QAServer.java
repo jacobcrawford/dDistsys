@@ -5,15 +5,21 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class QAServer {
-    protected int portNumber = 40499;
-    protected ServerSocket serverSocket;
-    protected Thread questionListener;
+public class QAServer extends AbstractServer {
+    private int portNumber;
+    private ServerSocket serverSocket;
+    private Thread questionListener;
 
+    public QAServer(int serverPortNumber) {
+        super(serverPortNumber);
+    }
 
+    public static void main(String[] args) throws IOException {
+        QAServer qa = new QAServer(40499);
+        qa.run();
+    }
 
-
-    public void run() {
+    private void run() {
         System.out.println("Hello world!");
         printLocalHostAddress();
         registerOnPort();
@@ -24,7 +30,7 @@ public class QAServer {
             if (socket != null) {
                 LinkedBlockingQueue<QA> questions = new LinkedBlockingQueue<>();
                 if (questionListener == null) {
-                    questionListener=createQuestionListenerThread(socket,questions);
+                    questionListener = createQuestionListenerThread(socket, questions);
                     questionListener.start();
                 }
 
@@ -37,7 +43,7 @@ public class QAServer {
                     BufferedReader stdin = new BufferedReader(stream);
 
                     while (socket.isConnected()) {
-                        qa =  questions.take();
+                        qa = questions.take();
                         //Empty the system.in stream so we only get the string after the question is asked.
                         while (stream.ready()) {
                             String ans = stdin.readLine();
@@ -65,22 +71,22 @@ public class QAServer {
         System.out.println("Goodbuy world!");
     }
 
-    public Thread createQuestionListenerThread(Socket socket, LinkedBlockingQueue<QA> questions){
-        return new Thread(()->{
+    private Thread createQuestionListenerThread(Socket socket, LinkedBlockingQueue<QA> questions) {
+        return new Thread(() -> {
             try {
                 ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
-                while(socket.isConnected()){
+                while (socket.isConnected()) {
                     Object o = fromClient.readObject();
-                    if (o instanceof QA){
-                        QA qa = (QA)o;
+                    if (o instanceof QA) {
+                        QA qa = (QA) o;
                         questions.add(qa);
-                    }else{
+                    } else {
                         System.out.println("Object from client was not QA");
                     }
                 }
                 fromClient.close();
 
-            } catch (EOFException e){
+            } catch (EOFException e) {
                 System.out.println("Connection to client was broken");
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
@@ -88,53 +94,7 @@ public class QAServer {
         });
     }
 
-    protected void registerOnPort(){
-        try {
-            serverSocket = new ServerSocket(portNumber);
-        } catch (IOException e) {
-            serverSocket = null;
-            System.err.println("Cannot open server socket on port number" + portNumber);
-            System.err.println(e);
-            System.exit(-1);
-        }
-    }
 
 
-    protected Socket waitForConnectionFromClient() {
-        Socket res = null;
-        try {
-            res = serverSocket.accept();
-        } catch (IOException e) {
-            // We return null on IOExceptions
-        }
-        return res;
-    }
-
-    public void deregisterOnPort() {
-        if (serverSocket != null) {
-            try {
-                serverSocket.close();
-                serverSocket = null;
-            } catch (IOException e) {
-                System.err.println(e);
-            }
-        }
-    }
-
-    protected void printLocalHostAddress() {
-        try {
-            InetAddress localhost = InetAddress.getLocalHost();
-            String localhostAddress = localhost.getHostAddress();
-            System.out.println("Contact this server on the IP address " + localhostAddress);
-        } catch (UnknownHostException e) {
-            System.err.println("Cannot resolve the Internet address of the local host.");
-            System.err.println(e);
-            System.exit(-1);
-        }
-    }
-    public static void main(String[] args) throws IOException {
-        QAServer qa = new QAServer();
-        qa.run();
-    }
 
 }

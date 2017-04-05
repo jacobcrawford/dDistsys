@@ -36,7 +36,7 @@ public class DDistDemoClient {
 
     /**
      *
-     * Connects to the server on IP address serverName and port number portNumber.
+     * Connects to the server on IP address serverName and port number serverPortNumber.
      */
     protected Socket connectToServer(String serverName) {
 	Socket res = null;

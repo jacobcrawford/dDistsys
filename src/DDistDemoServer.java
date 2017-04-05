@@ -36,7 +36,7 @@ public class DDistDemoServer {
     }
 
     /**
-     * Will register this server on the port number portNumber. Will not start waiting
+     * Will register this server on the port number serverPortNumber. Will not start waiting
      * for connections. For this you should call waitForConnectionFromClient().
      */
     protected void registerOnPort() {
@@ -62,7 +62,7 @@ public class DDistDemoServer {
     }
 
     /**
-     * Waits for the next client to connect on port number portNumber or takes the
+     * Waits for the next client to connect on port number serverPortNumber or takes the
      * next one in line in case a client is already trying to connect. Returns the
      * socket of the connection, null if there were any failures.
      */
