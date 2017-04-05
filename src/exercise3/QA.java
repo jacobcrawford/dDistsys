@@ -1,3 +1,5 @@
+package exercise3;
+
 import java.io.Serializable;
 
 public class QA implements Serializable {

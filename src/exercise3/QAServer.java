@@ -1,8 +1,8 @@
+package exercise3;
+
 import java.io.*;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class QAServer {
@@ -74,7 +74,7 @@ public class QAServer {
                         QA qa = (QA) o;
                         questions.add(qa);
                     } else {
-                        System.out.println("Object from client was not QA");
+                        System.out.println("Object from client was not exercise3.QA");
                     }
                 }
 
