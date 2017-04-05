@@ -16,7 +16,7 @@ public class AbstractServer extends AbstractNetworkUnit {
         super(portNumber);
     }
 
-    protected void registerOnPort() {
+    public void registerOnPort() {
         try {
             serverSocket = new ServerSocket(serverPortNumber);
         } catch (IOException e) {
@@ -27,7 +27,7 @@ public class AbstractServer extends AbstractNetworkUnit {
         }
     }
 
-    protected Socket waitForConnectionFromClient() {
+    public Socket waitForConnectionFromClient() {
         Socket res = null;
         try {
             res = serverSocket.accept();
@@ -38,7 +38,7 @@ public class AbstractServer extends AbstractNetworkUnit {
     }
 
 
-    protected void deregisterOnPort() {
+    public void deregisterOnPort() {
         if (serverSocket != null) {
             try {
                 serverSocket.close();

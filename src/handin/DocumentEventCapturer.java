@@ -36,6 +36,10 @@ public class DocumentEventCapturer extends DocumentFilter {
         return eventHistory.take();
     }
 
+    public void addMyTextEvent(MyTextEvent event) {
+        eventHistory.add(event);
+    }
+
     public void insertString(FilterBypass fb, int offset, String str, AttributeSet a) throws BadLocationException {
     /* Queue a copy of the event and then modify the textarea */
         eventHistory.add(new TextInsertEvent(offset, str));

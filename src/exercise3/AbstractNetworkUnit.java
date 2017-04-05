@@ -9,20 +9,24 @@ import java.net.UnknownHostException;
 public class AbstractNetworkUnit {
     protected int serverPortNumber;
 
-    public AbstractNetworkUnit(int serverPortNumber){
+    public AbstractNetworkUnit(int serverPortNumber) {
         this.serverPortNumber = serverPortNumber;
     }
 
     protected void printLocalHostAddress() {
+        String localhostAddress = this.getLocalHostAddress();
+        System.out.println("Contact this server on the IP address " + localhostAddress);
+    }
+
+    public String getLocalHostAddress() {
         try {
             InetAddress localhost = InetAddress.getLocalHost();
-            String localhostAddress = localhost.getHostAddress();
-            System.out.println("Contact this server on the IP address " + localhostAddress);
+            return localhost.getHostAddress();
         } catch (UnknownHostException e) {
             System.err.println("Cannot resolve the Internet address of the local host.");
             System.err.println(e);
             System.exit(-1);
         }
+        return null;
     }
-
 }
