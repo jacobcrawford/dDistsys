@@ -1,7 +1,5 @@
 import java.io.*;
-import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class QAClient extends AbstractClient {
@@ -60,7 +58,7 @@ public class QAClient extends AbstractClient {
                 }
 
                 socket.close();
-            } catch (IOException e) {
+            } catch (IOException ex) {
                 // We ignore IOExceptions
             }
         }
@@ -79,6 +77,9 @@ public class QAClient extends AbstractClient {
                             + answer.getAnswer() + "\"");
 
                 }
+            } catch (EOFException e) {
+                System.out.println("Server closed connection");
+                System.exit(-1);
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
