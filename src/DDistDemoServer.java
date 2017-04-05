@@ -116,10 +116,8 @@ public class DDistDemoServer {
     }
 
     private void listenForSystemIn(final Socket socket) {
-        standard_in_listener = new Thread(new Runnable() {
+        standard_in_listener = new Thread(()-> {
 
-            @Override
-            public void run() {
                 BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
 
                 try {
@@ -132,8 +130,6 @@ public class DDistDemoServer {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-            }
         });
         standard_in_listener.start();
     }
