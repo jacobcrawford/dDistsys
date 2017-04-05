@@ -1,3 +1,5 @@
+package exercise3;
+
 import java.net.*;
 import java.io.*;
 
