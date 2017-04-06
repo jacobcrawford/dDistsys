@@ -13,44 +13,19 @@ import java.awt.*;
 public class EventReplayer implements Runnable {
 
     private DocumentEventCapturer dec;
-    private JTextArea area;
+    private OutputStrategy outputStrategy;
 
-    public EventReplayer(DocumentEventCapturer dec, JTextArea area) {
+    public EventReplayer(DocumentEventCapturer dec, OutputStrategy outputStrategy) {
         this.dec = dec;
-        this.area = area;
+        this.outputStrategy = outputStrategy;
     }
 
     public void run() {
         boolean wasInterrupted = false;
         while (!wasInterrupted) {
-            waitForOneSecond();
             try {
-                MyTextEvent mte = dec.take();
-                if (mte instanceof TextInsertEvent) {
-                    final TextInsertEvent tie = (TextInsertEvent) mte;
-                    EventQueue.invokeLater(() -> {
-                        try {
-                            area.insert(tie.getText(), tie.getOffset());
-                        } catch (Exception e) {
-                            System.err.println(e);
-                /* We catch all axceptions, as an uncaught exception would make the
-                 * EDT unwind, which is not healthy.
-                 */
-                        }
-                    });
-                } else if (mte instanceof TextRemoveEvent) {
-                    final TextRemoveEvent tre = (TextRemoveEvent) mte;
-                    EventQueue.invokeLater(() -> {
-                        try {
-                            area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
-                        } catch (Exception e) {
-                            System.err.println(e);
-                /* We catch all axceptions, as an uncaught exception would make the
-                 * EDT unwind, which is now healthy.
-                 */
-                        }
-                    });
-                }
+                final MyTextEvent tie = dec.take();
+                outputStrategy.output(tie);
             } catch (InterruptedException ex) {
                 wasInterrupted = true;
             }

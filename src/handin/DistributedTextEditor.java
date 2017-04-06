@@ -35,7 +35,9 @@ public class DistributedTextEditor extends JFrame {
     private Action Connect;
     private Action Quit;
     private boolean connected = false;
-    private DocumentEventCapturer dec = new DocumentEventCapturer();
+    private DocumentEventCapturer inputDec = new DocumentEventCapturer();
+    private DocumentEventCapturer outputDec = new DocumentEventCapturer();
+
     private KeyListener k1;
 
     public DistributedTextEditor() {
@@ -45,7 +47,7 @@ public class DistributedTextEditor extends JFrame {
 
         area2 = new JTextArea(20, 120);
         area2.setFont(new Font("Monospaced", Font.PLAIN, 12));
-        ((AbstractDocument) area1.getDocument()).setDocumentFilter(dec);
+        ((AbstractDocument) area1.getDocument()).setDocumentFilter(inputDec);
         area2.setEditable(false);
 
         initializeActions();
@@ -86,7 +88,6 @@ public class DistributedTextEditor extends JFrame {
         file.add(SaveAs);
         file.add(Quit);
 
-
         edit.add(Copy);
         edit.add(Paste);
         edit.getItem(0).setText("Copy");
@@ -111,7 +112,7 @@ public class DistributedTextEditor extends JFrame {
                 "Try to type and delete stuff in the top area.\n" +
                 "Then figure out how it works.\n", 0);
 
-        er = new EventReplayer(dec, area2);
+        er = new EventReplayer(inputDec, new LocalOutputStrategy(area2));
         ert = new Thread(er);
         ert.start();
         dialog = new JFileChooser(System.getProperty("user.dir"));
@@ -160,14 +161,17 @@ public class DistributedTextEditor extends JFrame {
                     server.registerOnPort();
                     setTitle("I'm listening on " + server.getLocalHostAddress() + " on port " + getPortNumber());
                     Socket socket = server.waitForConnectionFromClient();
-
+                    ((AbstractDocument) area1.getDocument()).setDocumentFilter(outputDec);
+                    new Thread(
+                            new EventReplayer(outputDec, new RemoteOutputStrategy(socket))
+                    ).start();
                     try {
                         final ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
                         while (socket.isConnected()) {
                             Object o = fromClient.readObject();
                             if (o instanceof MyTextEvent) {
                                 MyTextEvent event = (MyTextEvent) o;
-                                dec.addMyTextEvent(event);
+                                inputDec.addMyTextEvent(event);
                             } else {
                                 System.out.println("Unreadable object reveived");
                             }
@@ -179,8 +183,6 @@ public class DistributedTextEditor extends JFrame {
                     } catch (IOException | ClassNotFoundException ex) {
                         ex.printStackTrace();
                     }
-
-
                 }).start();
 
                 changed = false;
@@ -198,18 +200,25 @@ public class DistributedTextEditor extends JFrame {
                     AbstractClient client = new AbstractClient(getPortNumber());
                     Socket socket = client.connectToServer(getIP());
                     setTitle("Connected to " + getIP() + " on port " + getPortNumber());
-
-                    final ObjectOutputStream outputStream;
+                    ((AbstractDocument) area1.getDocument()).setDocumentFilter(outputDec);
+                    new Thread(
+                            new EventReplayer(outputDec, new RemoteOutputStrategy(socket))
+                    ).start();
                     try {
-                        outputStream = new ObjectOutputStream(socket.getOutputStream());
+                        final ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
                         while (socket.isConnected()) {
-                            try {
-                                outputStream.writeObject(dec.take());
-                            } catch (IOException | InterruptedException ex) {
-                                ex.printStackTrace();
+                            Object o = fromClient.readObject();
+                            if (o instanceof MyTextEvent) {
+                                MyTextEvent event = (MyTextEvent) o;
+                                inputDec.addMyTextEvent(event);
+                            } else {
+                                System.out.println("Unreadable object reveived");
                             }
                         }
+                        fromClient.close();
                     } catch (IOException e1) {
+                        e1.printStackTrace();
+                    } catch (ClassNotFoundException e1) {
                         e1.printStackTrace();
                     }
 
