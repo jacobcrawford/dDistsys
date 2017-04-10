@@ -11,34 +11,40 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.*;
+import java.io.EOFException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.Socket;
 
 public class DistributedTextEditor extends JFrame {
 
-    private Action Disconnect;
+    private boolean changed = false;
+
     private JTextArea area1;
-    private ActionMap m;
-    private Action Copy;
-    private Action Paste;
     private JTextArea area2;
     private JTextField ipAddress;
     private JTextField portNumber;
-    private EventReplayer er;
-    private Thread ert;
     private JFileChooser dialog;
     private String currentFile = "Untitled";
-    private boolean changed = false;
+
+    private Action Disconnect;
+    private Action Copy;
+    private Action Paste;
     private Action Save;
     private Action SaveAs;
     private Action Listen;
     private Action Connect;
     private Action Quit;
-    private boolean connected = false;
+
     private DocumentEventCapturer inputDec = new DocumentEventCapturer();
     private DocumentEventCapturer outputDec = new DocumentEventCapturer();
 
-    private KeyListener k1;
+    private Thread localReplayThread;
+    private Thread onlineReplayThread;
+
+    private Socket socket;
+    private boolean online;
 
     public DistributedTextEditor() {
 
@@ -95,10 +101,11 @@ public class DistributedTextEditor extends JFrame {
 
         Save.setEnabled(false);
         SaveAs.setEnabled(false);
+        Disconnect.setEnabled(false);
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         pack();
-        k1 = new KeyAdapter() {
+        KeyListener k1 = new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
                 changed = true;
                 Save.setEnabled(true);
@@ -112,9 +119,11 @@ public class DistributedTextEditor extends JFrame {
                 "Try to type and delete stuff in the top area.\n" +
                 "Then figure out how it works.\n", 0);
 
-        er = new EventReplayer(inputDec, new LocalOutputStrategy(area2));
-        ert = new Thread(er);
-        ert.start();
+        //initialize the replayer on area2
+        EventReplayer localReplayer = new EventReplayer(inputDec, new LocalOutputStrategy(area2));
+        localReplayThread = new Thread(localReplayer);
+        localReplayThread.start();
+
         dialog = new JFileChooser(System.getProperty("user.dir"));
     }
 
@@ -122,10 +131,41 @@ public class DistributedTextEditor extends JFrame {
         new DistributedTextEditor();
     }
 
+    /**
+     * Sets the menuButtons related to online.
+     *
+     * @param online whether the new state is online or offline
+     */
+    private void updateConnectionMenuButtons(boolean online) {
+        Listen.setEnabled(!online);
+        Connect.setEnabled(!online);
+        Disconnect.setEnabled(online);
+    }
+
     private void initializeActions() {
         Disconnect = new AbstractAction("Disconnect") {
             public void actionPerformed(ActionEvent e) {
+
+                // Resets the online connections
+                online = false;
+                if (onlineReplayThread != null) {
+                    onlineReplayThread.interrupt();
+                }
+                try {
+                    socket.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+                //sets the Eventreplayer to offline mode
+                UpdateLocalReplayer(inputDec);
+
+                //resets the ui:
+                area1.setText("");
+                area2.setText("");
+                updateConnectionMenuButtons(false);
                 setTitle("Disconnected");
+
                 // TODO
             }
         };
@@ -148,7 +188,7 @@ public class DistributedTextEditor extends JFrame {
                 System.exit(0);
             }
         };
-        m = area1.getActionMap();
+        ActionMap m = area1.getActionMap();
         Copy = m.get(DefaultEditorKit.copyAction);
         Paste = m.get(DefaultEditorKit.pasteAction);
 
@@ -156,33 +196,22 @@ public class DistributedTextEditor extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 saveOld();
                 area1.setText("");
+                updateConnectionMenuButtons(true);
+
+                //sets the EventReplayer to online mode
+                UpdateLocalReplayer(outputDec);
+
                 new Thread(() -> {
                     AbstractServer server = new AbstractServer(getPortNumber());
                     server.registerOnPort();
                     setTitle("I'm listening on " + server.getLocalHostAddress() + " on port " + getPortNumber());
-                    Socket socket = server.waitForConnectionFromClient();
-                    ((AbstractDocument) area1.getDocument()).setDocumentFilter(outputDec);
-                    new Thread(
-                            new EventReplayer(outputDec, new RemoteOutputStrategy(socket))
-                    ).start();
-                    try {
-                        final ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
-                        while (socket.isConnected()) {
-                            Object o = fromClient.readObject();
-                            if (o instanceof MyTextEvent) {
-                                MyTextEvent event = (MyTextEvent) o;
-                                inputDec.addMyTextEvent(event);
-                            } else {
-                                System.out.println("Unreadable object reveived");
-                            }
-                        }
-                        fromClient.close();
-
-                    } catch (EOFException ex) {
-                        System.out.println("Connection to client was broken");
-                    } catch (IOException | ClassNotFoundException ex) {
-                        ex.printStackTrace();
+                    online = true;
+                    //listen for new clients, until user "disconnects"
+                    while (online) {
+                        socket = server.waitForConnectionFromClient();
+                        receiveEvents(socket);
                     }
+                    server.deregisterOnPort();
                 }).start();
 
                 changed = false;
@@ -195,37 +224,74 @@ public class DistributedTextEditor extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new Thread(() -> {
+                    //sets the EventReplayer to online mode
+                    UpdateLocalReplayer(outputDec);
+
+                    updateConnectionMenuButtons(true);
                     saveOld();
                     area1.setText("");
+
                     AbstractClient client = new AbstractClient(getPortNumber());
-                    Socket socket = client.connectToServer(getIP());
-                    setTitle("Connected to " + getIP() + " on port " + getPortNumber());
-                    ((AbstractDocument) area1.getDocument()).setDocumentFilter(outputDec);
-                    new Thread(
-                            new EventReplayer(outputDec, new RemoteOutputStrategy(socket))
-                    ).start();
-                    try {
-                        final ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
-                        while (socket.isConnected()) {
-                            Object o = fromClient.readObject();
-                            if (o instanceof MyTextEvent) {
-                                MyTextEvent event = (MyTextEvent) o;
-                                inputDec.addMyTextEvent(event);
-                            } else {
-                                System.out.println("Unreadable object reveived");
-                            }
-                        }
-                        fromClient.close();
-                    } catch (IOException e1) {
-                        e1.printStackTrace();
-                    } catch (ClassNotFoundException e1) {
-                        e1.printStackTrace();
+                    socket = client.connectToServer(getIP());
+
+                    if (socket == null) {
+                        startOfflineMode();
+                        setTitle("connection failed - Disconnected");
+                        return;
                     }
 
+                    setTitle("Connected to " + getIP() + " on port " + getPortNumber());
+
+                    receiveEvents(socket);
                 }).start();
 
+                changed = false;
+                Save.setEnabled(false);
+                SaveAs.setEnabled(false);
             }
         };
+    }
+
+    private void startOfflineMode() {
+        UpdateLocalReplayer(inputDec);
+        updateConnectionMenuButtons(false);
+    }
+
+    private void UpdateLocalReplayer(DocumentEventCapturer dec) {
+        localReplayThread.interrupt();
+        EventReplayer localReplayer = new EventReplayer(dec, new LocalOutputStrategy(area2));
+        localReplayThread = new Thread(localReplayer);
+        localReplayThread.start();
+    }
+
+    private void receiveEvents(Socket socket) {
+        onlineReplayThread = new Thread(
+                new EventReplayer(inputDec, new RemoteOutputStrategy(socket))
+        );
+        onlineReplayThread.start();
+
+        try {
+
+            final ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
+
+            while (socket.isConnected() && !socket.isClosed()) {
+                Object o = fromClient.readObject();
+                if (o instanceof MyTextEvent) {
+                    MyTextEvent event = (MyTextEvent) o;
+                    outputDec.addMyTextEvent(event);
+                } else {
+                    System.out.println("Unreadable object reveived");
+                }
+            }
+            fromClient.close();
+
+        } catch (EOFException ex) {
+            System.out.println("Connection to client was broken");
+        } catch (IOException | ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+
+        onlineReplayThread.interrupt();
     }
 
     private int getPortNumber() {
