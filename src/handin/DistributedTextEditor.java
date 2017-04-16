@@ -1,5 +1,6 @@
 package handin;
 
+import com.sun.xml.internal.bind.v2.TODO;
 import exercise3.AbstractClient;
 import exercise3.AbstractServer;
 
@@ -225,11 +226,11 @@ public class DistributedTextEditor extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 new Thread(() -> {
                     //sets the EventReplayer to online mode
-                    UpdateLocalReplayer(outputDec);
 
                     updateConnectionMenuButtons(true);
                     saveOld();
                     area1.setText("");
+                    UpdateLocalReplayer(outputDec);
 
                     AbstractClient client = new AbstractClient(getPortNumber());
                     socket = client.connectToServer(getIP());
@@ -273,7 +274,7 @@ public class DistributedTextEditor extends JFrame {
         try {
 
             final ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
-
+            //TODO handle SocketException
             while (socket.isConnected() && !socket.isClosed()) {
                 Object o = fromClient.readObject();
                 if (o instanceof MyTextEvent) {
