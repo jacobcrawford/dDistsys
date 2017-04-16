@@ -17,6 +17,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class DistributedTextEditor extends JFrame {
 
@@ -162,12 +163,12 @@ public class DistributedTextEditor extends JFrame {
                 UpdateLocalReplayer(inputDec);
 
                 //resets the ui:
+                updateConnectionMenuButtons(false);
                 area1.setText("");
                 area2.setText("");
-                updateConnectionMenuButtons(false);
                 setTitle("Disconnected");
 
-                // TODO
+                // TODO what søren????
             }
         };
         Save = new AbstractAction("Save") {
@@ -286,7 +287,10 @@ public class DistributedTextEditor extends JFrame {
             }
             fromClient.close();
 
-        } catch (EOFException ex) {
+        } catch (SocketException s){
+            System.out.println("Connection was broken");
+        }
+        catch (EOFException ex) {
             System.out.println("Connection to client was broken");
         } catch (IOException | ClassNotFoundException ex) {
             ex.printStackTrace();
