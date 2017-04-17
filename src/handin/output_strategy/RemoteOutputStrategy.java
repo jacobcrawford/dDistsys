@@ -1,5 +1,7 @@
-package handin;
+package handin.output_strategy;
 
+
+import handin.text_events.MyTextEvent;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;

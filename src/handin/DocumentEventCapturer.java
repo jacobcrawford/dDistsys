@@ -1,5 +1,9 @@
 package handin;
 
+import handin.text_events.MyTextEvent;
+import handin.text_events.TextInsertEvent;
+import handin.text_events.TextRemoveEvent;
+
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
@@ -24,7 +28,7 @@ public class DocumentEventCapturer extends DocumentFilter {
      *    empty, then take() will wait until new elements arrive, which is what
      *    we want, as we then don't need to keep asking until there are new elements.
      */
-    private LinkedBlockingQueue<MyTextEvent> eventHistory = new LinkedBlockingQueue<MyTextEvent>();
+    private LinkedBlockingQueue<MyTextEvent> eventHistory = new LinkedBlockingQueue<>();
 
     /**
      * If the queue is empty, then the call will block until an element arrives.

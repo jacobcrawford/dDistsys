@@ -1,4 +1,8 @@
-package handin;
+package handin.output_strategy;
+
+import handin.text_events.MyTextEvent;
+import handin.text_events.TextInsertEvent;
+import handin.text_events.TextRemoveEvent;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,8 +25,8 @@ public class LocalOutputStrategy implements OutputStrategy {
                 final TextRemoveEvent tre = (TextRemoveEvent) event;
                 EventQueue.invokeLater(() -> area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength()));
             }
-        }catch (Exception ex){
-            System.err.print(ex);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 }

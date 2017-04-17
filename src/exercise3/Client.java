@@ -6,9 +6,9 @@ import java.net.Socket;
 /**
  * Made by Rasmus on 05/04/2017.
  */
-public class AbstractClient extends AbstractNetworkUnit {
+public class Client extends AbstractNetworkUnit {
 
-    public AbstractClient(int portNumber) {
+    public Client(int portNumber) {
         super(portNumber);
     }
 

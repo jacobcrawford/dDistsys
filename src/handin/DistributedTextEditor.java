@@ -1,7 +1,10 @@
 package handin;
 
-import exercise3.AbstractClient;
-import exercise3.AbstractServer;
+import exercise3.Client;
+import exercise3.Server;
+import handin.output_strategy.LocalOutputStrategy;
+import handin.output_strategy.RemoteOutputStrategy;
+import handin.text_events.MyTextEvent;
 
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
@@ -34,7 +37,7 @@ public class DistributedTextEditor extends JFrame {
     private JTextField portNumber;
     private JFileChooser dialog;
     private String currentFile = "Untitled";
-    private AbstractServer server;
+    private Server server;
     private Action Disconnect;
     private Action Copy;
     private Action Paste;
@@ -48,7 +51,6 @@ public class DistributedTextEditor extends JFrame {
     private DocumentEventCapturer outputDec = new DocumentEventCapturer();
 
     private Thread localReplayThread;
-    private Thread onlineReplayThread;
 
     private Socket socket;
     private boolean listening;
@@ -194,8 +196,6 @@ public class DistributedTextEditor extends JFrame {
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-
-                // TODO what søren????
             }
         };
         Save = new AbstractAction("Save") {
@@ -225,7 +225,7 @@ public class DistributedTextEditor extends JFrame {
         JFrame me = this;
         Listen = new AbstractAction("Listen") {
             public void actionPerformed(ActionEvent e) {
-                server = new AbstractServer(getPortNumber());
+                server = new Server(getPortNumber());
                 if (!server.registerOnPort()) {
                     JOptionPane.showMessageDialog(me,
                             "Could not start listening. Port already in use.",
@@ -271,7 +271,7 @@ public class DistributedTextEditor extends JFrame {
                     area1.setText("");
                     updateLocalReplayer(outputDec);
 
-                    AbstractClient client = new AbstractClient(getPortNumber());
+                    Client client = new Client(getPortNumber());
                     socket = client.connectToServer(getIP());
 
                     if (socket == null) {
@@ -315,15 +315,13 @@ public class DistributedTextEditor extends JFrame {
     }
 
     private void receiveEvents(Socket socket) {
-        onlineReplayThread = new Thread(
+        Thread onlineReplayThread = new Thread(
                 new EventReplayer(inputDec, new RemoteOutputStrategy(socket))
         );
         onlineReplayThread.start();
 
         try {
-
             final ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
-            //TODO handle SocketException
             while (socket.isConnected() && !socket.isClosed()) {
                 Object o = fromClient.readObject();
                 if (o instanceof MyTextEvent) {
@@ -344,7 +342,6 @@ public class DistributedTextEditor extends JFrame {
         }
 
         onlineReplayThread.interrupt();
-
     }
 
     /**

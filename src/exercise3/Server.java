@@ -7,12 +7,12 @@ import java.net.Socket;
 /**
  * Made by Rasmus on 05/04/2017.
  */
-public class AbstractServer extends AbstractNetworkUnit {
+public class Server extends AbstractNetworkUnit {
 
 
     private ServerSocket serverSocket;
 
-    public AbstractServer(int portNumber) {
+    public Server(int portNumber) {
         super(portNumber);
     }
 

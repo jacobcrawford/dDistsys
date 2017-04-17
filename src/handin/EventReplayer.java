@@ -1,7 +1,7 @@
 package handin;
 
-import javax.swing.*;
-import java.awt.*;
+import handin.output_strategy.OutputStrategy;
+import handin.text_events.MyTextEvent;
 
 /**
  * Takes the event recorded by the DocumentEventCapturer and replays
@@ -32,12 +32,5 @@ public class EventReplayer implements Runnable {
             }
         }
         System.out.println("I'm the thread running the EventReplayer, now I die!");
-    }
-
-    public void waitForOneSecond() {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException _) {
-        }
     }
 }
