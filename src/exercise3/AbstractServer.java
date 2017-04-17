@@ -16,14 +16,13 @@ public class AbstractServer extends AbstractNetworkUnit {
         super(portNumber);
     }
 
-    public void registerOnPort() {
+    public boolean registerOnPort() {
         try {
             serverSocket = new ServerSocket(serverPortNumber);
+            return true;
         } catch (IOException e) {
             serverSocket = null;
-            System.err.println("Cannot open server socket on port number" + serverPortNumber);
-            System.err.println(e);
-            System.exit(-1);
+            return false;
         }
     }
 
@@ -44,7 +43,7 @@ public class AbstractServer extends AbstractNetworkUnit {
                 serverSocket.close();
                 serverSocket = null;
             } catch (IOException e) {
-                System.err.println(e);
+                e.printStackTrace();
             }
         }
     }

@@ -46,14 +46,14 @@ public class DistributedTextEditor extends JFrame {
     private Thread onlineReplayThread;
 
     private Socket socket;
-    private boolean online;
+    private boolean listening;
 
-    public DistributedTextEditor() {
+    private DistributedTextEditor() {
 
-        area1 = new JTextArea(20, 120);
+        area1 = new JTextArea(12, 70);
         area1.setFont(new Font("Monospaced", Font.PLAIN, 12));
 
-        area2 = new JTextArea(20, 120);
+        area2 = new JTextArea(12, 70);
         area2.setFont(new Font("Monospaced", Font.PLAIN, 12));
         ((AbstractDocument) area1.getDocument()).setDocumentFilter(inputDec);
         area2.setEditable(false);
@@ -105,7 +105,7 @@ public class DistributedTextEditor extends JFrame {
         SaveAs.setEnabled(false);
         Disconnect.setEnabled(false);
 
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         pack();
         KeyListener k1 = new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
@@ -134,9 +134,9 @@ public class DistributedTextEditor extends JFrame {
     }
 
     /**
-     * Sets the menuButtons related to online.
+     * Sets the menuButtons related to listening.
      *
-     * @param online whether the new state is online or offline
+     * @param online whether the new state is listening or offline
      */
     private void updateConnectionMenuButtons(boolean online) {
         Listen.setEnabled(!online);
@@ -148,24 +148,15 @@ public class DistributedTextEditor extends JFrame {
         Disconnect = new AbstractAction("Disconnect") {
             public void actionPerformed(ActionEvent e) {
 
-                // Resets the online connections
-                online = false;
-                if (onlineReplayThread != null) {
-                    onlineReplayThread.interrupt();
-                }
+                // Resets the listening connections
+                listening = false;
                 try {
                     socket.close();
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
 
-                //sets the Eventreplayer to offline mode
-                updateLocalReplayer(inputDec);
-
-                //resets the ui:
-                updateConnectionMenuButtons(false);
-
-                setTitle("Disconnected");
+//                goOffline();
 
                 // TODO what søren????
             }
@@ -193,26 +184,36 @@ public class DistributedTextEditor extends JFrame {
         Copy = m.get(DefaultEditorKit.copyAction);
         Paste = m.get(DefaultEditorKit.pasteAction);
 
+        JFrame me = this;
         Listen = new AbstractAction("Listen") {
             public void actionPerformed(ActionEvent e) {
+                AbstractServer server = new AbstractServer(getPortNumber());
+                if (!server.registerOnPort()) {
+                    JOptionPane.showMessageDialog(me,
+                            "Could not start listening. Port already in use.",
+                            "Error starting server",
+                            JOptionPane.INFORMATION_MESSAGE,
+                            new ImageIcon("res/trollface.png"));
+                    return;
+                }
+
                 saveOld();
                 area1.setText("");
                 updateConnectionMenuButtons(true);
 
-                //sets the EventReplayer to online mode
+                //sets the EventReplayer to listening mode
                 updateLocalReplayer(outputDec);
 
                 new Thread(() -> {
-                    AbstractServer server = new AbstractServer(getPortNumber());
-                    server.registerOnPort();
                     setTitle("I'm listening on " + server.getLocalHostAddress() + " on port " + getPortNumber());
-                    online = true;
+                    listening = true;
                     //listen for new clients, until user "disconnects"
-                    while (online) {
+                    while (listening) {
                         socket = server.waitForConnectionFromClient();
                         receiveEvents(socket);
                     }
                     server.deregisterOnPort();
+                    goOffline();
                 }).start();
 
                 changed = false;
@@ -225,7 +226,7 @@ public class DistributedTextEditor extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new Thread(() -> {
-                    //sets the EventReplayer to online mode
+                    //sets the EventReplayer to listening mode
 
                     updateConnectionMenuButtons(true);
                     saveOld();
@@ -236,7 +237,7 @@ public class DistributedTextEditor extends JFrame {
                     socket = client.connectToServer(getIP());
 
                     if (socket == null) {
-                        startOfflineMode();
+                        goOffline();
                         setTitle("connection failed - Disconnected");
                         return;
                     }
@@ -244,6 +245,7 @@ public class DistributedTextEditor extends JFrame {
                     setTitle("Connected to " + getIP() + " on port " + getPortNumber());
 
                     receiveEvents(socket);
+                    goOffline();
                 }).start();
 
                 changed = false;
@@ -253,9 +255,16 @@ public class DistributedTextEditor extends JFrame {
         };
     }
 
-    private void startOfflineMode() {
+    private void goOffline() {
+        //sets the Eventreplayer to offline mode
         updateLocalReplayer(inputDec);
+
+        //resets the ui:
         updateConnectionMenuButtons(false);
+
+        setTitle("Disconnected");
+
+        emptyTextAreas();
     }
 
     private void updateLocalReplayer(DocumentEventCapturer dec) {
@@ -297,6 +306,7 @@ public class DistributedTextEditor extends JFrame {
         }
 
         onlineReplayThread.interrupt();
+
     }
 
     /**
@@ -341,7 +351,7 @@ public class DistributedTextEditor extends JFrame {
             currentFile = fileName;
             changed = false;
             Save.setEnabled(false);
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
