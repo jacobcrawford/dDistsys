@@ -29,7 +29,7 @@ public class DistributedTextEditor extends JFrame {
     private JTextField portNumber;
     private JFileChooser dialog;
     private String currentFile = "Untitled";
-
+    private AbstractServer server;
     private Action Disconnect;
     private Action Copy;
     private Action Paste;
@@ -48,7 +48,7 @@ public class DistributedTextEditor extends JFrame {
     private Socket socket;
     private boolean listening;
 
-    private DistributedTextEditor() {
+    private DistributedTextEditor(int x, int y) {
 
         area1 = new JTextArea(12, 70);
         area1.setFont(new Font("Monospaced", Font.PLAIN, 12));
@@ -87,6 +87,7 @@ public class DistributedTextEditor extends JFrame {
         JMB.add(file);
         JMB.add(edit);
 
+        this.setLocation(x, y);
 
         file.add(Listen);
         file.add(Connect);
@@ -130,7 +131,28 @@ public class DistributedTextEditor extends JFrame {
     }
 
     public static void main(String[] arg) {
-        new DistributedTextEditor();
+//        try {
+//            String line;
+//            Process p = Runtime.getRuntime().exec("ps -e");
+//            BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+//            while ((line = input.readLine()) != null) {
+//                System.out.println(line); //<-- Parse data here.
+//            }
+//            input.close();
+//        } catch (Exception err) {
+//            err.printStackTrace();
+//        }
+
+//        String property = "firstWindow";
+
+//        System.out.println(System.getProperty(property));
+//        if (System.getProperty(property) == null) {
+        new DistributedTextEditor(0, 0);
+//            System.setProperty(property, "");
+//        } else {
+//            new DistributedTextEditor(500, 0);
+//        }
+
     }
 
     /**
@@ -150,13 +172,14 @@ public class DistributedTextEditor extends JFrame {
 
                 // Resets the listening connections
                 listening = false;
+
+                if (server != null) server.deregisterOnPort();
+
                 try {
-                    socket.close();
+                    if (socket != null) socket.close();
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-
-//                goOffline();
 
                 // TODO what søren????
             }
@@ -187,7 +210,7 @@ public class DistributedTextEditor extends JFrame {
         JFrame me = this;
         Listen = new AbstractAction("Listen") {
             public void actionPerformed(ActionEvent e) {
-                AbstractServer server = new AbstractServer(getPortNumber());
+                server = new AbstractServer(getPortNumber());
                 if (!server.registerOnPort()) {
                     JOptionPane.showMessageDialog(me,
                             "Could not start listening. Port already in use.",
@@ -210,7 +233,7 @@ public class DistributedTextEditor extends JFrame {
                     //listen for new clients, until user "disconnects"
                     while (listening) {
                         socket = server.waitForConnectionFromClient();
-                        receiveEvents(socket);
+                        if (socket != null) receiveEvents(socket);
                     }
                     server.deregisterOnPort();
                     goOffline();
