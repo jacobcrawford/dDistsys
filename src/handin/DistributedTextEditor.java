@@ -8,19 +8,24 @@ import javax.swing.text.AbstractDocument;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.DocumentFilter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.*;
 import java.io.EOFException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 
 public class DistributedTextEditor extends JFrame {
 
+    private static final int SECOND_WINDOW_POSITION = 700;
+    private static Path posFile;
     private boolean changed = false;
 
     private JTextArea area1;
@@ -128,31 +133,40 @@ public class DistributedTextEditor extends JFrame {
         localReplayThread.start();
 
         dialog = new JFileChooser(System.getProperty("user.dir"));
+
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                removePosFile();
+                super.windowClosing(e);
+            }
+        });
     }
 
-    public static void main(String[] arg) {
-//        try {
-//            String line;
-//            Process p = Runtime.getRuntime().exec("ps -e");
-//            BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-//            while ((line = input.readLine()) != null) {
-//                System.out.println(line); //<-- Parse data here.
-//            }
-//            input.close();
-//        } catch (Exception err) {
-//            err.printStackTrace();
-//        }
+    public static void main(String[] arg) throws IOException {
+        String visited = "true";
+        posFile = Paths.get("pos");
 
-//        String property = "firstWindow";
+        int x;
 
-//        System.out.println(System.getProperty(property));
-//        if (System.getProperty(property) == null) {
-        new DistributedTextEditor(0, 0);
-//            System.setProperty(property, "");
-//        } else {
-//            new DistributedTextEditor(500, 0);
-//        }
+        if (!posFile.toFile().exists() || !Files.readAllLines(posFile).get(0).equals(visited)) {
+            x = 0;
+            List<String> lines = Collections.singletonList(visited);
+            Files.write(posFile, lines, Charset.forName("UTF-8"));
+        } else {
+            x = SECOND_WINDOW_POSITION;
+            List<String> lines = Collections.singletonList("");
+            Files.write(posFile, lines, Charset.forName("UTF-8"));
+        }
 
+        new DistributedTextEditor(x, 0);
+    }
+
+    private static void removePosFile() {
+        try {
+            Files.delete(posFile);
+        } catch (IOException ignored) {
+        }
     }
 
     /**
@@ -200,6 +214,7 @@ public class DistributedTextEditor extends JFrame {
         Quit = new AbstractAction("Quit") {
             public void actionPerformed(ActionEvent e) {
                 saveOld();
+                removePosFile();
                 System.exit(0);
             }
         };
