@@ -235,12 +235,7 @@ public class DistributedTextEditor extends JFrame {
                     return;
                 }
 
-                saveOld();
-                area1.setText("");
-                updateConnectionMenuButtons(true);
-
-                //sets the EventReplayer to listening mode
-                updateLocalReplayer(outputDec);
+                goOnline();
 
                 new Thread(() -> {
                     setTitle("I'm listening on " + server.getLocalHostAddress() + " on port " + getPortNumber());
@@ -248,49 +243,47 @@ public class DistributedTextEditor extends JFrame {
                     //listen for new clients, until user "disconnects"
                     while (listening) {
                         socket = server.waitForConnectionFromClient();
-                        if (socket != null) receiveEvents(socket);
+                        if (socket != null) sendAndReceiveEvents(socket);
                     }
                     server.deregisterOnPort();
                     goOffline();
                 }).start();
 
-                changed = false;
-                save.setEnabled(false);
-                saveAs.setEnabled(false);
             }
         };
 
         connect = new AbstractAction("connect") {
             @Override
             public void actionPerformed(ActionEvent e) {
+                Client client = new Client(getPortNumber());
+                socket = client.connectToServer(getIP());
+
+                if (socket == null) {
+                    setTitle("connection failed - Disconnected");
+                    return;
+                }
+
+                goOnline();
                 new Thread(() -> {
-                    //sets the EventReplayer to listening mode
-
-                    updateConnectionMenuButtons(true);
-                    saveOld();
-                    area1.setText("");
-                    updateLocalReplayer(outputDec);
-
-                    Client client = new Client(getPortNumber());
-                    socket = client.connectToServer(getIP());
-
-                    if (socket == null) {
-                        goOffline();
-                        setTitle("connection failed - Disconnected");
-                        return;
-                    }
-
                     setTitle("Connected to " + getIP() + " on port " + getPortNumber());
-
-                    receiveEvents(socket);
+                    sendAndReceiveEvents(socket);
                     goOffline();
                 }).start();
-
-                changed = false;
-                save.setEnabled(false);
-                saveAs.setEnabled(false);
             }
         };
+    }
+
+    private void goOnline() {
+        saveOld();
+        area1.setText("");
+        updateConnectionMenuButtons(true);
+
+        //sets the EventReplayer to listening mode
+        updateLocalReplayer(outputDec);
+
+        changed = false;
+        save.setEnabled(false);
+        saveAs.setEnabled(false);
     }
 
     /**
@@ -310,6 +303,7 @@ public class DistributedTextEditor extends JFrame {
 
     /**
      * Interrupts the old localreplay, and starts a new one, with the given DocumentEventCapturer.
+     *
      * @param dec, the DocumentEventCapturer, which the replayer will take events from.
      */
     private void updateLocalReplayer(DocumentEventCapturer dec) {
@@ -337,14 +331,17 @@ public class DistributedTextEditor extends JFrame {
     /**
      * Will receive events from the socket's InputStream, until the socket closes/an exception is cast.
      * In case of SocketException, or EOFException, the textFields are reset
+     *
      * @param socket, the socket, which InputStream is read from.
      */
-    private void receiveEvents(Socket socket) {
+    private void sendAndReceiveEvents(Socket socket) {
+        // Create an event replayer that listens on inputDec and outputs to the socket
         Thread onlineReplayThread = new Thread(
                 new EventReplayer(inputDec, new RemoteOutputStrategy(socket))
         );
         onlineReplayThread.start();
 
+        // Send textevents from the input stream to the outputDec
         try {
             final ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
             while (socket.isConnected() && !socket.isClosed()) {
@@ -353,7 +350,7 @@ public class DistributedTextEditor extends JFrame {
                     MyTextEvent event = (MyTextEvent) o;
                     outputDec.addMyTextEvent(event);
                 } else {
-                    System.out.println("Unreadable object reveived");
+                    System.out.println("Unreadable object received");
                 }
             }
             fromClient.close();
@@ -366,6 +363,7 @@ public class DistributedTextEditor extends JFrame {
             ex.printStackTrace();
         }
 
+        // Stop sending from inputDec to the socket
         onlineReplayThread.interrupt();
     }
 
