@@ -1,6 +1,5 @@
 package handin;
 
-import com.sun.xml.internal.bind.v2.TODO;
 import exercise3.AbstractClient;
 import exercise3.AbstractServer;
 
@@ -160,12 +159,17 @@ public class DistributedTextEditor extends JFrame {
                 }
 
                 //sets the Eventreplayer to offline mode
-                UpdateLocalReplayer(inputDec);
+                updateLocalReplayer(inputDec);
 
                 //resets the ui:
                 updateConnectionMenuButtons(false);
+
+                // Remove the eventlistener on area1, clear the areas and reinstall the listener
+                ((AbstractDocument) area1.getDocument()).setDocumentFilter(null);
                 area1.setText("");
                 area2.setText("");
+                ((AbstractDocument) area1.getDocument()).setDocumentFilter(inputDec);
+
                 setTitle("Disconnected");
 
                 // TODO what søren????
@@ -201,7 +205,7 @@ public class DistributedTextEditor extends JFrame {
                 updateConnectionMenuButtons(true);
 
                 //sets the EventReplayer to online mode
-                UpdateLocalReplayer(outputDec);
+                updateLocalReplayer(outputDec);
 
                 new Thread(() -> {
                     AbstractServer server = new AbstractServer(getPortNumber());
@@ -231,7 +235,7 @@ public class DistributedTextEditor extends JFrame {
                     updateConnectionMenuButtons(true);
                     saveOld();
                     area1.setText("");
-                    UpdateLocalReplayer(outputDec);
+                    updateLocalReplayer(outputDec);
 
                     AbstractClient client = new AbstractClient(getPortNumber());
                     socket = client.connectToServer(getIP());
@@ -255,15 +259,17 @@ public class DistributedTextEditor extends JFrame {
     }
 
     private void startOfflineMode() {
-        UpdateLocalReplayer(inputDec);
+        updateLocalReplayer(inputDec);
         updateConnectionMenuButtons(false);
     }
 
-    private void UpdateLocalReplayer(DocumentEventCapturer dec) {
+    private void updateLocalReplayer(DocumentEventCapturer dec) {
         localReplayThread.interrupt();
         EventReplayer localReplayer = new EventReplayer(dec, new LocalOutputStrategy(area2));
         localReplayThread = new Thread(localReplayer);
         localReplayThread.start();
+
+
     }
 
     private void receiveEvents(Socket socket) {
