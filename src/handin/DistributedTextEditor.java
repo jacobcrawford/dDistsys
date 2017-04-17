@@ -6,6 +6,7 @@ import exercise3.AbstractServer;
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.DefaultEditorKit;
+import javax.swing.text.DocumentFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
@@ -164,12 +165,6 @@ public class DistributedTextEditor extends JFrame {
                 //resets the ui:
                 updateConnectionMenuButtons(false);
 
-                // Remove the eventlistener on area1, clear the areas and reinstall the listener
-                ((AbstractDocument) area1.getDocument()).setDocumentFilter(null);
-                area1.setText("");
-                area2.setText("");
-                ((AbstractDocument) area1.getDocument()).setDocumentFilter(inputDec);
-
                 setTitle("Disconnected");
 
                 // TODO what søren????
@@ -293,16 +288,29 @@ public class DistributedTextEditor extends JFrame {
             }
             fromClient.close();
 
-        } catch (SocketException s){
-            System.out.println("Connection was broken");
-        }
-        catch (EOFException ex) {
-            System.out.println("Connection to client was broken");
+        } catch (SocketException | EOFException s) {
+            // SocketException is thrown when you disconnect
+            // EOFException is thrown when the other disconnects
+            emptyTextAreas();
         } catch (IOException | ClassNotFoundException ex) {
             ex.printStackTrace();
         }
 
         onlineReplayThread.interrupt();
+    }
+
+    /**
+     * Empty the two text areas. First, the current document filter on area 1 is saved.
+     * Then, it is removed, the areas are emptied, and the filter is reinstated.
+     */
+    private void emptyTextAreas() {
+        DocumentFilter filter = ((AbstractDocument) area1.getDocument()).getDocumentFilter();
+
+        AbstractDocument document = (AbstractDocument) area1.getDocument();
+        document.setDocumentFilter(null);
+        area1.setText("");
+        area2.setText("");
+        document.setDocumentFilter(filter);
     }
 
     private int getPortNumber() {
