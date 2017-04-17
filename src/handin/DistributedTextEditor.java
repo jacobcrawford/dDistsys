@@ -293,6 +293,9 @@ public class DistributedTextEditor extends JFrame {
         };
     }
 
+    /**
+     * Returns the editor to offline mode.
+     */
     private void goOffline() {
         //sets the Eventreplayer to offline mode
         updateLocalReplayer(inputDec);
@@ -305,6 +308,10 @@ public class DistributedTextEditor extends JFrame {
         emptyTextAreas();
     }
 
+    /**
+     * Interrupts the old localreplay, and starts a new one, with the given DocumentEventCapturer.
+     * @param dec, the DocumentEventCapturer, which the replayer will take events from.
+     */
     private void updateLocalReplayer(DocumentEventCapturer dec) {
         localReplayThread.interrupt();
         EventReplayer localReplayer = new EventReplayer(dec, new LocalOutputStrategy(area2));
@@ -312,6 +319,26 @@ public class DistributedTextEditor extends JFrame {
         localReplayThread.start();
     }
 
+    /**
+     * Empty the two text areas. First, the current document filter on area 1 is saved.
+     * Then, it is removed, the areas are emptied, and the filter is reinstated.
+     */
+    private void emptyTextAreas() {
+        DocumentFilter filter = ((AbstractDocument) area1.getDocument()).getDocumentFilter();
+
+        AbstractDocument document = (AbstractDocument) area1.getDocument();
+        document.setDocumentFilter(null);
+        area1.setText("");
+        area2.setText("");
+        document.setDocumentFilter(filter);
+    }
+
+
+    /**
+     * Will receive events from the socket's InputStream, until the socket closes/an exception is cast.
+     * In case of SocketException, or EOFException, the textFields are reset
+     * @param socket, the socket, which InputStream is read from.
+     */
     private void receiveEvents(Socket socket) {
         Thread onlineReplayThread = new Thread(
                 new EventReplayer(inputDec, new RemoteOutputStrategy(socket))
@@ -340,20 +367,6 @@ public class DistributedTextEditor extends JFrame {
         }
 
         onlineReplayThread.interrupt();
-    }
-
-    /**
-     * Empty the two text areas. First, the current document filter on area 1 is saved.
-     * Then, it is removed, the areas are emptied, and the filter is reinstated.
-     */
-    private void emptyTextAreas() {
-        DocumentFilter filter = ((AbstractDocument) area1.getDocument()).getDocumentFilter();
-
-        AbstractDocument document = (AbstractDocument) area1.getDocument();
-        document.setDocumentFilter(null);
-        area1.setText("");
-        area2.setText("");
-        document.setDocumentFilter(filter);
     }
 
     private int getPortNumber() {
