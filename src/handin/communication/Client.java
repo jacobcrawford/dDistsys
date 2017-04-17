@@ -1,4 +1,4 @@
-package exercise3;
+package handin.communication;
 
 import java.io.IOException;
 import java.net.Socket;

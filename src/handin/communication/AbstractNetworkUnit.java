@@ -1,4 +1,4 @@
-package exercise3;
+package handin.communication;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

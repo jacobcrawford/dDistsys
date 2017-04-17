@@ -24,13 +24,11 @@ public class EventReplayer implements Runnable {
         boolean wasInterrupted = false;
         while (!wasInterrupted) {
             try {
-                //TODO FIX: here it blocks one last time even though it was interrupted.
                 final MyTextEvent tie = dec.take();
                 outputStrategy.output(tie);
             } catch (InterruptedException ex) {
                 wasInterrupted = true;
             }
         }
-        System.out.println("I'm the thread running the EventReplayer, now I die!");
     }
 }

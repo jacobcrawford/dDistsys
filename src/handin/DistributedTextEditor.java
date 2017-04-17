@@ -1,7 +1,7 @@
 package handin;
 
-import exercise3.Client;
-import exercise3.Server;
+import handin.communication.Client;
+import handin.communication.Server;
 import handin.output_strategy.LocalOutputStrategy;
 import handin.output_strategy.RemoteOutputStrategy;
 import handin.text_events.MyTextEvent;
@@ -38,14 +38,14 @@ public class DistributedTextEditor extends JFrame {
     private JFileChooser dialog;
     private String currentFile = "Untitled";
     private Server server;
-    private Action Disconnect;
-    private Action Copy;
-    private Action Paste;
-    private Action Save;
-    private Action SaveAs;
-    private Action Listen;
-    private Action Connect;
-    private Action Quit;
+    private Action disconnect;
+    private Action copy;
+    private Action paste;
+    private Action save;
+    private Action saveAs;
+    private Action listen;
+    private Action connect;
+    private Action quit;
 
     private DocumentEventCapturer inputDec = new DocumentEventCapturer();
     private DocumentEventCapturer outputDec = new DocumentEventCapturer();
@@ -96,30 +96,30 @@ public class DistributedTextEditor extends JFrame {
 
         this.setLocation(x, y);
 
-        file.add(Listen);
-        file.add(Connect);
-        file.add(Disconnect);
+        file.add(listen);
+        file.add(connect);
+        file.add(disconnect);
         file.addSeparator();
-        file.add(Save);
-        file.add(SaveAs);
-        file.add(Quit);
+        file.add(save);
+        file.add(saveAs);
+        file.add(quit);
 
-        edit.add(Copy);
-        edit.add(Paste);
-        edit.getItem(0).setText("Copy");
-        edit.getItem(1).setText("Paste");
+        edit.add(copy);
+        edit.add(paste);
+        edit.getItem(0).setText("copy");
+        edit.getItem(1).setText("paste");
 
-        Save.setEnabled(false);
-        SaveAs.setEnabled(false);
-        Disconnect.setEnabled(false);
+        save.setEnabled(false);
+        saveAs.setEnabled(false);
+        disconnect.setEnabled(false);
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         pack();
         KeyListener k1 = new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
                 changed = true;
-                Save.setEnabled(true);
-                SaveAs.setEnabled(true);
+                save.setEnabled(true);
+                saveAs.setEnabled(true);
             }
         };
         area1.addKeyListener(k1);
@@ -177,13 +177,13 @@ public class DistributedTextEditor extends JFrame {
      * @param online whether the new state is listening or offline
      */
     private void updateConnectionMenuButtons(boolean online) {
-        Listen.setEnabled(!online);
-        Connect.setEnabled(!online);
-        Disconnect.setEnabled(online);
+        listen.setEnabled(!online);
+        connect.setEnabled(!online);
+        disconnect.setEnabled(online);
     }
 
     private void initializeActions() {
-        Disconnect = new AbstractAction("Disconnect") {
+        disconnect = new AbstractAction("disconnect") {
             public void actionPerformed(ActionEvent e) {
 
                 // Resets the listening connections
@@ -198,7 +198,7 @@ public class DistributedTextEditor extends JFrame {
                 }
             }
         };
-        Save = new AbstractAction("Save") {
+        save = new AbstractAction("save") {
             public void actionPerformed(ActionEvent e) {
                 if (!currentFile.equals("Untitled"))
                     saveFile(currentFile);
@@ -206,12 +206,12 @@ public class DistributedTextEditor extends JFrame {
                     saveFileAs();
             }
         };
-        SaveAs = new AbstractAction("Save as...") {
+        saveAs = new AbstractAction("save as...") {
             public void actionPerformed(ActionEvent e) {
                 saveFileAs();
             }
         };
-        Quit = new AbstractAction("Quit") {
+        quit = new AbstractAction("quit") {
             public void actionPerformed(ActionEvent e) {
                 saveOld();
                 removePosFile();
@@ -219,11 +219,11 @@ public class DistributedTextEditor extends JFrame {
             }
         };
         ActionMap m = area1.getActionMap();
-        Copy = m.get(DefaultEditorKit.copyAction);
-        Paste = m.get(DefaultEditorKit.pasteAction);
+        copy = m.get(DefaultEditorKit.copyAction);
+        paste = m.get(DefaultEditorKit.pasteAction);
 
         JFrame me = this;
-        Listen = new AbstractAction("Listen") {
+        listen = new AbstractAction("listen") {
             public void actionPerformed(ActionEvent e) {
                 server = new Server(getPortNumber());
                 if (!server.registerOnPort()) {
@@ -255,12 +255,12 @@ public class DistributedTextEditor extends JFrame {
                 }).start();
 
                 changed = false;
-                Save.setEnabled(false);
-                SaveAs.setEnabled(false);
+                save.setEnabled(false);
+                saveAs.setEnabled(false);
             }
         };
 
-        Connect = new AbstractAction("Connect") {
+        connect = new AbstractAction("connect") {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new Thread(() -> {
@@ -287,8 +287,8 @@ public class DistributedTextEditor extends JFrame {
                 }).start();
 
                 changed = false;
-                Save.setEnabled(false);
-                SaveAs.setEnabled(false);
+                save.setEnabled(false);
+                saveAs.setEnabled(false);
             }
         };
     }
@@ -310,8 +310,6 @@ public class DistributedTextEditor extends JFrame {
         EventReplayer localReplayer = new EventReplayer(dec, new LocalOutputStrategy(area2));
         localReplayThread = new Thread(localReplayer);
         localReplayThread.start();
-
-
     }
 
     private void receiveEvents(Socket socket) {
@@ -373,7 +371,7 @@ public class DistributedTextEditor extends JFrame {
 
     private void saveOld() {
         if (changed) {
-            if (JOptionPane.showConfirmDialog(this, "Would you like to save " + currentFile + " ?", "Save", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
+            if (JOptionPane.showConfirmDialog(this, "Would you like to save " + currentFile + " ?", "save", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
                 saveFile(currentFile);
         }
     }
@@ -385,7 +383,7 @@ public class DistributedTextEditor extends JFrame {
             w.close();
             currentFile = fileName;
             changed = false;
-            Save.setEnabled(false);
+            save.setEnabled(false);
         } catch (IOException ignored) {
         }
     }
