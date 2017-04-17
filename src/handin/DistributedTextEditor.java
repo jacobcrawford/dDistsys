@@ -145,7 +145,7 @@ public class DistributedTextEditor extends JFrame {
 
     public static void main(String[] arg) throws IOException {
         String visited = "true";
-        posFile = Paths.get("pos");
+        posFile = Paths.get(".pos");
 
         int x;
 
