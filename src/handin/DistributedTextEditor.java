@@ -62,6 +62,8 @@ public class DistributedTextEditor extends JFrame {
 
         area2 = new JTextArea(12, 70);
         area2.setFont(new Font("Monospaced", Font.PLAIN, 12));
+
+
         ((AbstractDocument) area1.getDocument()).setDocumentFilter(inputDec);
         area2.setEditable(false);
 
@@ -122,6 +124,7 @@ public class DistributedTextEditor extends JFrame {
                 saveAs.setEnabled(true);
             }
         };
+        //TODO what does this do?
         area1.addKeyListener(k1);
         setTitle("Disconnected");
         setVisible(true);
@@ -262,6 +265,7 @@ public class DistributedTextEditor extends JFrame {
                     setTitle("connection failed - Disconnected");
                     return;
                 }
+                //TODO Make client nok write to own area
 
                 goOnline();
                 new Thread(() -> {
@@ -308,7 +312,7 @@ public class DistributedTextEditor extends JFrame {
      */
     private void updateLocalReplayer(DocumentEventCapturer dec) {
         localReplayThread.interrupt();
-        EventReplayer localReplayer = new EventReplayer(dec, new LocalOutputStrategy(area2));
+        EventReplayer localReplayer = new EventReplayer(dec, new LocalOutputStrategy(area1));
         localReplayThread = new Thread(localReplayer);
         localReplayThread.start();
     }

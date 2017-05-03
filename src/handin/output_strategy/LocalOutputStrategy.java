@@ -18,6 +18,7 @@ public class LocalOutputStrategy implements OutputStrategy {
     @Override
     public void output(MyTextEvent event) {
         try {
+            //TODO The Eventqueeue.invokelate
             if (event instanceof TextInsertEvent) {
                 final TextInsertEvent tie = (TextInsertEvent) event;
                 EventQueue.invokeLater(() -> area.insert(tie.getText(), event.getOffset()));
