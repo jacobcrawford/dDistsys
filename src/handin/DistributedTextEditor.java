@@ -2,7 +2,9 @@ package handin;
 
 import handin.communication.Client;
 import handin.communication.Server;
+import handin.output_strategy.FilterIgnoringOutputStrategy;
 import handin.output_strategy.LocalOutputStrategy;
+import handin.output_strategy.OutputStrategy;
 import handin.output_strategy.RemoteOutputStrategy;
 import handin.text_events.MyTextEvent;
 
@@ -119,6 +121,7 @@ public class DistributedTextEditor extends JFrame {
         pack();
         KeyListener k1 = new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
+ //               System.out.println(e.get);
                 changed = true;
                 save.setEnabled(true);
                 saveAs.setEnabled(true);
@@ -277,13 +280,16 @@ public class DistributedTextEditor extends JFrame {
         };
     }
 
+    /**
+     * sets the editor to online mode.
+     */
     private void goOnline() {
         saveOld();
         area1.setText("");
         updateConnectionMenuButtons(true);
 
         //sets the EventReplayer to listening mode
-        updateLocalReplayer(outputDec);
+        updateLocalReplayer(outputDec,new FilterIgnoringOutputStrategy(area1));
 
         changed = false;
         save.setEnabled(false);
@@ -295,7 +301,7 @@ public class DistributedTextEditor extends JFrame {
      */
     private void goOffline() {
         //sets the Eventreplayer to offline mode
-        updateLocalReplayer(inputDec);
+        updateLocalReplayer(inputDec,new LocalOutputStrategy(area1));
 
         //resets the ui:
         updateConnectionMenuButtons(false);
@@ -310,9 +316,9 @@ public class DistributedTextEditor extends JFrame {
      *
      * @param dec, the DocumentEventCapturer, which the replayer will take events from.
      */
-    private void updateLocalReplayer(DocumentEventCapturer dec) {
+    private void updateLocalReplayer(DocumentEventCapturer dec, OutputStrategy outputStrategy) {
         localReplayThread.interrupt();
-        EventReplayer localReplayer = new EventReplayer(dec, new LocalOutputStrategy(area1));
+        EventReplayer localReplayer = new EventReplayer(dec, outputStrategy);
         localReplayThread = new Thread(localReplayer);
         localReplayThread.start();
     }
