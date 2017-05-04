@@ -36,6 +36,7 @@ public class OutputHandler {
                 while (true) {
                     try {
                         event = eventQueue.take();
+                        System.out.println("event received!");
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -47,6 +48,7 @@ public class OutputHandler {
 
     private void broadcast(MyTextEvent event) {
         //
+        System.out.println("BroadCast!");
         for (ObjectOutputStream outputStream: outputStreams) {
             try {
                 outputStream.writeObject(event);

@@ -48,6 +48,7 @@ public class Coordinator {
                 }
             }
         });
+        listenThread.start();
     }
 
     public void stop() {
