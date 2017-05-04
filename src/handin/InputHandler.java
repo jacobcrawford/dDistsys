@@ -2,20 +2,36 @@ package handin;
 
 import handin.text_events.MyTextEvent;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Queue;
 
-/**
- * Created by hjort on 5/4/17.
- */
+
 public class InputHandler implements Runnable {
 
-    public InputHandler(ObjectInputStream stream, Queue<MyTextEvent> EventQueue) {
+    private ObjectInputStream stream;
+    private Queue<MyTextEvent> eventQueue;
+    private Boolean running;
 
+    public InputHandler(ObjectInputStream stream, Queue<MyTextEvent> eventQueue) {
+        running=true;
+        this.stream = stream;
+        this.eventQueue = eventQueue;
     }
 
     @Override
     public void run() {
         //receive and send to Queue
+            try {
+                while(running) {
+                    MyTextEvent event = (MyTextEvent) stream.readObject();
+                    eventQueue.add(event);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+
     }
 }
