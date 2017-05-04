@@ -30,6 +30,7 @@ public class FilterIgnoringOutputStrategy implements OutputStrategy {
                 final TextInsertEvent tie = (TextInsertEvent) event;
                 EventQueue.invokeLater(() -> {
                     doc.setDocumentFilter(null);
+//                    filter.
                     area.insert(tie.getText(), event.getOffset());
                     doc.setDocumentFilter(filter);
                 });
