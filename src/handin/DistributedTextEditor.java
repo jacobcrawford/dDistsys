@@ -1,6 +1,5 @@
 package handin;
 
-import handin.communication.Client;
 import handin.communication.Server;
 import handin.output_strategy.FilterIgnoringOutputStrategy;
 import handin.output_strategy.LocalOutputStrategy;
@@ -243,17 +242,22 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
                 goOnline();
 
-                new Thread(() -> {
-                    setTitle("I'm listening on " + server.getLocalHostAddress() + " on port " + getPortNumber());
-                    listening = true;
-                    //listen for new clients, until user "disconnects"
-                    while (listening) {
-                        socket = server.waitForConnectionFromClient();
-                        if (socket != null) sendAndReceiveEvents(socket);
-                    }
-                    server.deregisterOnPort();
-                    goOffline();
-                }).start();
+                Coordinator coordinator = new Coordinator(server);
+                coordinator.start();
+
+//                new Thread(() -> {
+//
+//
+//                    setTitle("I'm listening on " + server.getLocalHostAddress() + " on port " + getPortNumber());
+//                    listening = true;
+////                    listen for new clients, until user "disconnects"
+//                    while (listening) {
+//                        socket = server.waitForConnectionFromClient();
+//                        if (socket != null) sendAndReceiveEvents(socket);
+//                    }
+//                    server.deregisterOnPort();
+//                    goOffline();
+//                }).start();
 
             }
         };
