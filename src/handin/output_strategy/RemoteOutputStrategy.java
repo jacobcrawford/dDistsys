@@ -28,8 +28,13 @@ public class RemoteOutputStrategy implements OutputStrategy {
     @Override
     public void output(MyTextEvent event) {
         try {
-            if (socket.isConnected())
+            if (socket.isConnected()) {
+                System.out.println("sending event!");
                 out.writeObject(event);
+
+            } else {
+                System.out.println("waht");
+            }
 
         } catch (IOException e) {
             e.printStackTrace();

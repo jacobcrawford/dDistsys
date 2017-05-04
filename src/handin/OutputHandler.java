@@ -36,7 +36,7 @@ public class OutputHandler {
                 while (true) {
                     try {
                         event = eventQueue.take();
-                        System.out.println("event received!");
+                        System.out.println("SS event received!");
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }

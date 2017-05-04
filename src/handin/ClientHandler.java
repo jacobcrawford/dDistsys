@@ -90,6 +90,7 @@ public class ClientHandler {
         } catch (SocketException | EOFException s) {
             // SocketException is thrown when you disconnect
             // EOFException is thrown when the other disconnects
+            s.printStackTrace();
             editor.emptyTextAreas();
         } catch (IOException | ClassNotFoundException ex) {
             ex.printStackTrace();

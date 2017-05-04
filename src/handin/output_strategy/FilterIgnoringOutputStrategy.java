@@ -25,21 +25,26 @@ public class FilterIgnoringOutputStrategy implements OutputStrategy {
         try {
             //TODO The Eventqueeue.invokelate
             AbstractDocument doc = (AbstractDocument) area.getDocument();
-            DocumentFilter filter = ((AbstractDocument) area.getDocument()).getDocumentFilter();
             if (event instanceof TextInsertEvent) {
                 final TextInsertEvent tie = (TextInsertEvent) event;
                 EventQueue.invokeLater(() -> {
+                    synchronized(area) {
+                        DocumentFilter filter = ((AbstractDocument) area.getDocument()).getDocumentFilter();
                     doc.setDocumentFilter(null);
 //                    filter.
                     area.insert(tie.getText(), event.getOffset());
                     doc.setDocumentFilter(filter);
+                    }
                 });
             } else if (event instanceof TextRemoveEvent) {
                 final TextRemoveEvent tre = (TextRemoveEvent) event;
                 EventQueue.invokeLater(() -> {
-                    doc.setDocumentFilter(null);
-                    area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
-                    doc.setDocumentFilter(filter);
+                    synchronized(area) {
+                        DocumentFilter filter = ((AbstractDocument) area.getDocument()).getDocumentFilter();
+                        doc.setDocumentFilter(null);
+                        area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
+                        doc.setDocumentFilter(filter);
+                    }
                 });
             }
         } catch (Exception ex) {

@@ -120,7 +120,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
         pack();
         KeyListener k1 = new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
- //               System.out.println(e.get);
+                System.out.println(((AbstractDocument) area1.getDocument()).getDocumentFilter());
                 changed = true;
                 save.setEnabled(true);
                 saveAs.setEnabled(true);
