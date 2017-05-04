@@ -27,7 +27,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
-public class DistributedTextEditor extends JFrame {
+public class DistributedTextEditor extends JFrame implements Editor {
 
     private static final int SECOND_WINDOW_POSITION = 700;
     private static Path posFile;
@@ -261,21 +261,9 @@ public class DistributedTextEditor extends JFrame {
         connect = new AbstractAction("connect") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Client client = new Client(getPortNumber());
-                socket = client.connectToServer(getIP());
-
-                if (socket == null) {
-                    setTitle("connection failed - Disconnected");
-                    return;
-                }
+                ClientHandler clientHandler = new ClientHandler();
+                setTitle(clientHandler.start(getIP(),getPortNumber(), (Editor) me));
                 //TODO Make client nok write to own area
-
-                goOnline();
-                new Thread(() -> {
-                    setTitle("Connected to " + getIP() + " on port " + getPortNumber());
-                    sendAndReceiveEvents(socket);
-                    goOffline();
-                }).start();
             }
         };
     }
@@ -283,7 +271,7 @@ public class DistributedTextEditor extends JFrame {
     /**
      * sets the editor to online mode.
      */
-    private void goOnline() {
+    public void goOnline() {
         saveOld();
         area1.setText("");
         updateConnectionMenuButtons(true);
@@ -296,10 +284,20 @@ public class DistributedTextEditor extends JFrame {
         saveAs.setEnabled(false);
     }
 
+    @Override
+    public DocumentEventCapturer getOutDec() {
+        return outputDec;
+    }
+
+    @Override
+    public DocumentEventCapturer getInDec() {
+        return inputDec;
+    }
+
     /**
      * Returns the editor to offline mode.
      */
-    private void goOffline() {
+    public void goOffline() {
         //sets the Eventreplayer to offline mode
         updateLocalReplayer(inputDec,new LocalOutputStrategy(area1));
 
@@ -327,7 +325,7 @@ public class DistributedTextEditor extends JFrame {
      * Empty the two text areas. First, the current document filter on area 1 is saved.
      * Then, it is removed, the areas are emptied, and the filter is reinstated.
      */
-    private void emptyTextAreas() {
+    public void emptyTextAreas() {
         DocumentFilter filter = ((AbstractDocument) area1.getDocument()).getDocumentFilter();
 
         AbstractDocument document = (AbstractDocument) area1.getDocument();

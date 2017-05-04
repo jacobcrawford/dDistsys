@@ -1,0 +1,102 @@
+package handin;
+
+import handin.communication.Client;
+import handin.output_strategy.FilterIgnoringOutputStrategy;
+import handin.output_strategy.LocalOutputStrategy;
+import handin.output_strategy.OutputStrategy;
+import handin.output_strategy.RemoteOutputStrategy;
+import handin.text_events.MyTextEvent;
+
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.DocumentFilter;
+import java.awt.*;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.net.Socket;
+import java.net.SocketException;
+
+/**
+ * Created by hjort on 5/4/17.
+ */
+public class ClientHandler {
+
+    private Socket socket;
+    private Thread localReplayThread;
+
+    public String start(String ip, int port,Editor editor) {
+        Client client = new Client(port);
+        socket = client.connectToServer(ip);
+
+        if (socket == null) {
+            return "connection failed - Disconnected";
+        }
+
+        editor.goOnline();
+        new Thread(() -> {
+            sendAndReceiveEvents(socket,editor);
+            editor.goOffline();
+        }).start();
+        return "Connected to " + ip + " on port " + port;
+    }
+
+    public void stop() {
+
+    }
+
+    /**
+     * Interrupts the old localreplay, and starts a new one, with the given DocumentEventCapturer.
+     *
+     * @param dec, the DocumentEventCapturer, which the replayer will take events from.
+     */
+    private void updateLocalReplayer(DocumentEventCapturer dec, OutputStrategy outputStrategy) {
+        localReplayThread.interrupt();
+        EventReplayer localReplayer = new EventReplayer(dec, outputStrategy);
+        localReplayThread = new Thread(localReplayer);
+        localReplayThread.start();
+    }
+
+
+    /**
+     * Will receive events from the socket's InputStream, until the socket closes/an exception is cast.
+     * In case of SocketException, or EOFException, the textFields are reset
+     *
+     * @param socket, the socket, which InputStream is read from.
+     */
+    private void sendAndReceiveEvents(Socket socket, Editor editor) {
+        DocumentEventCapturer inputDec = editor.getInDec();
+        DocumentEventCapturer outputDec = editor.getOutDec();
+        // Create an event replayer that listens on inputDec and outputs to the socket
+        Thread onlineReplayThread = new Thread(
+                new EventReplayer(inputDec, new RemoteOutputStrategy(socket))
+        );
+        onlineReplayThread.start();
+
+        // Send textevents from the input stream to the outputDec
+        try {
+            final ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
+            while (socket.isConnected() && !socket.isClosed()) {
+                Object o = fromClient.readObject();
+                if (o instanceof MyTextEvent) {
+                    MyTextEvent event = (MyTextEvent) o;
+                    int a = 1; //TODO remove
+                    outputDec.addMyTextEvent(event);
+                } else {
+                    System.out.println("Unreadable object received");
+                }
+            }
+            fromClient.close();
+
+        } catch (SocketException | EOFException s) {
+            // SocketException is thrown when you disconnect
+            // EOFException is thrown when the other disconnects
+            editor.emptyTextAreas();
+        } catch (IOException | ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+
+        // Stop sending from inputDec to the socket
+        onlineReplayThread.interrupt();
+    }
+
+}
