@@ -34,7 +34,7 @@ public class Coordinator {
                 try {
                     // Block until a socket is connected
                     Socket socket = server.waitForConnectionFromClient();
-
+                    System.out.println("new client connected");
                     // Add the outputstream to the handler
                     ObjectOutputStream outputStream = new ObjectOutputStream((socket.getOutputStream()));
                     outputHandler.addClient(outputStream);

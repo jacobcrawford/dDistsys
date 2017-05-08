@@ -33,6 +33,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private boolean changed = false;
 
     private JTextArea area1;
+    private JTextArea area2;
     private JTextField ipAddress;
     private JTextField portNumber;
     private JFileChooser dialog;

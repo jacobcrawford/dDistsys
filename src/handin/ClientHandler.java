@@ -20,7 +20,7 @@ public class ClientHandler {
     public String start(String ip, int port,Editor editor) {
         Client client = new Client(port);
         socket = client.connectToServer(ip);
-
+        System.out.println("connection");
         if (socket == null) {
             return "connection failed - Disconnected";
         }
