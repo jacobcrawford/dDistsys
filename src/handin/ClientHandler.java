@@ -10,9 +10,6 @@ import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.net.SocketException;
 
-/**
- * Created by hjort on 5/4/17.
- */
 public class ClientHandler {
 
     private Socket socket;
@@ -75,7 +72,8 @@ public class ClientHandler {
         } catch (SocketException | EOFException s) {
             // SocketException is thrown when you disconnect
             // EOFException is thrown when the other disconnects
-            s.printStackTrace();
+            //s.printStackTrace();
+            System.out.println("Socket/EOF-Exception cast in ClientHandler");
             editor.emptyTextAreas();
         } catch (IOException | ClassNotFoundException ex) {
             ex.printStackTrace();

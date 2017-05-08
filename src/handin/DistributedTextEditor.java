@@ -209,6 +209,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
                             new ImageIcon("res/trollface.png"));
                     return;
                 }
+                setTitle("I'm listening on " + server.getLocalHostAddress() + " on port " + getPortNumber());
 
                 goOnline();
 
@@ -231,6 +232,17 @@ public class DistributedTextEditor extends JFrame implements Editor {
         };
     }
 
+    @Override
+    public DocumentEventCapturer getOutDec() {
+        return outputDec;
+    }
+
+    @Override
+    public DocumentEventCapturer getInDec() {
+        return inputDec;
+    }
+
+
     /**
      * sets the editor to online mode.
      */
@@ -240,22 +252,13 @@ public class DistributedTextEditor extends JFrame implements Editor {
         updateConnectionMenuButtons(true);
 
         ((AbstractDocument) area1.getDocument()).setDocumentFilter(inputDec);
+
         //sets the EventReplayer to listening mode
         updateLocalReplayer(outputDec, new FilterIgnoringOutputStrategy(area1));
 
         changed = false;
         save.setEnabled(false);
         saveAs.setEnabled(false);
-    }
-
-    @Override
-    public DocumentEventCapturer getOutDec() {
-        return outputDec;
-    }
-
-    @Override
-    public DocumentEventCapturer getInDec() {
-        return inputDec;
     }
 
     /**
