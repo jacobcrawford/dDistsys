@@ -4,8 +4,6 @@ import handin.communication.Server;
 import handin.output_strategy.FilterIgnoringOutputStrategy;
 import handin.output_strategy.LocalOutputStrategy;
 import handin.output_strategy.OutputStrategy;
-import handin.output_strategy.RemoteOutputStrategy;
-import handin.text_events.MyTextEvent;
 
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
@@ -13,12 +11,9 @@ import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.DocumentFilter;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.EOFException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.net.Socket;
-import java.net.SocketException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,6 +42,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private Action listen;
     private Action connect;
     private Action quit;
+    private ClientHandler clientHandler;
 
     private DocumentEventCapturer inputDec = new DocumentEventCapturer();
     private DocumentEventCapturer outputDec = new DocumentEventCapturer();
@@ -168,16 +164,11 @@ public class DistributedTextEditor extends JFrame implements Editor {
         disconnect = new AbstractAction("disconnect") {
             public void actionPerformed(ActionEvent e) {
 
-                // Resets the listening connections
-                listening = false;
+                // Resets the listening connection
 
                 if (server != null) server.deregisterOnPort();
 
-                try {
-                    if (socket != null) socket.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
+                clientHandler.stop();
             }
         };
         save = new AbstractAction("save") {
@@ -219,36 +210,20 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
                 goOnline();
 
-                Coordinator coordinator = new Coordinator(server,area1);
+                Coordinator coordinator = new Coordinator(server, area1);
                 coordinator.start();
 
                 //start local "client"
                 ClientHandler clientHandler = new ClientHandler();
-                System.out.println(clientHandler.start("localhost",getPortNumber(), (Editor) me));
-
-
-//                new Thread(() -> {
-//
-//
-//                    setTitle("I'm listening on " + server.getLocalHostAddress() + " on port " + getPortNumber());
-//                    listening = true;
-////                    listen for new clients, until user "disconnects"
-//                    while (listening) {
-//                        socket = server.waitForConnectionFromClient();
-//                        if (socket != null) sendAndReceiveEvents(socket);
-//                    }
-//                    server.deregisterOnPort();
-//                    goOffline();
-//                }).start();
-
+                System.out.println(clientHandler.start("localhost", getPortNumber(), (Editor) me));
             }
         };
 
         connect = new AbstractAction("connect") {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ClientHandler clientHandler = new ClientHandler();
-                setTitle(clientHandler.start(getIP(),getPortNumber(), (Editor) me));
+                clientHandler = new ClientHandler();
+                setTitle(clientHandler.start(getIP(), getPortNumber(), (Editor) me));
             }
         };
     }
@@ -263,7 +238,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
         ((AbstractDocument) area1.getDocument()).setDocumentFilter(inputDec);
         //sets the EventReplayer to listening mode
-        updateLocalReplayer(outputDec,new FilterIgnoringOutputStrategy(area1));
+        updateLocalReplayer(outputDec, new FilterIgnoringOutputStrategy(area1));
 
         changed = false;
         save.setEnabled(false);
@@ -285,7 +260,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
      */
     public void goOffline() {
         //sets the Eventreplayer to offline mode
-        updateLocalReplayer(inputDec,new LocalOutputStrategy(area1));
+        updateLocalReplayer(inputDec, new LocalOutputStrategy(area1));
         ((AbstractDocument) area1.getDocument()).setDocumentFilter(null);
 
         //resets the ui:

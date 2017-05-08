@@ -35,6 +35,12 @@ public class ClientHandler {
 
     public void stop() {
         //TODO implement this
+        try{
+            if (socket!=null)socket.close();
+            System.out.println("Client disconnected");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
