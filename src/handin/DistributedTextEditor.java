@@ -43,6 +43,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private Action connect;
     private Action quit;
     private ClientHandler clientHandler;
+    private Coordinator coordinator;
 
     private DocumentEventCapturer inputDec = new DocumentEventCapturer();
     private DocumentEventCapturer outputDec = new DocumentEventCapturer();
@@ -167,8 +168,9 @@ public class DistributedTextEditor extends JFrame implements Editor {
                 // Resets the listening connection
 
                 if (server != null) server.deregisterOnPort();
-
+                if (coordinator!=null)coordinator.stop();
                 clientHandler.stop();
+
             }
         };
         save = new AbstractAction("save") {
@@ -210,12 +212,13 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
                 goOnline();
 
-                Coordinator coordinator = new Coordinator(server, area1);
+                coordinator = new Coordinator(server, area1);
                 coordinator.start();
 
                 //start local "client"
-                ClientHandler clientHandler = new ClientHandler();
+                clientHandler = new ClientHandler();
                 System.out.println(clientHandler.start("localhost", getPortNumber(), (Editor) me));
+
             }
         };
 

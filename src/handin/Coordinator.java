@@ -58,6 +58,7 @@ public class Coordinator {
     }
 
     public void stop() {
+        outputHandler.stop();
         listenThread.interrupt();
     }
 }

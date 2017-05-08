@@ -5,6 +5,7 @@ import handin.text_events.MyTextEvent;
 import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -55,6 +56,17 @@ public class OutputHandler {
             } catch (IOException e) {
                 e.printStackTrace();
                 //TODO Handle crash
+            }
+        }
+    }
+
+    public void stop() {
+        for (OutputStream out: outputStreams){
+            try {
+                out.close();
+            } catch (IOException e) {
+                System.out.println("Closing connection to client");
+                e.printStackTrace();
             }
         }
     }

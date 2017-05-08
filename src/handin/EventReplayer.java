@@ -27,7 +27,7 @@ public class EventReplayer implements Runnable {
                 final MyTextEvent tie = dec.take();
                 outputStrategy.output(tie);
             } catch (InterruptedException ex) {
-                ex.printStackTrace();
+                System.out.println("EventRePlayer was interrupted");
                 wasInterrupted = true;
             }
         }
