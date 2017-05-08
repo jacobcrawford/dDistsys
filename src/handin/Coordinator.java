@@ -2,7 +2,10 @@ package handin;
 
 import handin.communication.Server;
 import handin.text_events.MyTextEvent;
+import handin.text_events.TextInsertEvent;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -14,8 +17,10 @@ public class Coordinator {
     private OutputHandler outputHandler;
     private Thread listenThread;
     private Server server;
+    private JTextArea textArea;
 
-    public Coordinator(Server server) {
+    public Coordinator(Server server, JTextArea textArea) {
+        this.textArea = textArea;
         this.eventQueue = new LinkedBlockingDeque<>();
         this.outputHandler = new OutputHandler(eventQueue);
         this.server = server;
@@ -37,6 +42,7 @@ public class Coordinator {
                     System.out.println("new client connected");
                     // Add the outputstream to the handler
                     ObjectOutputStream outputStream = new ObjectOutputStream((socket.getOutputStream()));
+                    outputStream.writeObject(new TextInsertEvent(0,textArea.getText()));
                     outputHandler.addClient(outputStream);
 
                     // Create an inputhandler, connect it to the outputhandler, and start its thread

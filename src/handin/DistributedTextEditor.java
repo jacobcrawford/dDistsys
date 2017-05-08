@@ -219,7 +219,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
                 goOnline();
 
-                Coordinator coordinator = new Coordinator(server);
+                Coordinator coordinator = new Coordinator(server,area1);
                 coordinator.start();
 
                 //start local "client"
