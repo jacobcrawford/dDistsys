@@ -33,7 +33,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private boolean changed = false;
 
     private JTextArea area1;
-    private JTextArea area2;
     private JTextField ipAddress;
     private JTextField portNumber;
     private JFileChooser dialog;
@@ -51,7 +50,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private DocumentEventCapturer inputDec = new DocumentEventCapturer();
     private DocumentEventCapturer outputDec = new DocumentEventCapturer();
 
-    private Thread localReplayThread;
+    private Thread localReplayThread = new Thread();
 
     private Socket socket;
     private boolean listening;
@@ -60,13 +59,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
         area1 = new JTextArea(12, 70);
         area1.setFont(new Font("Monospaced", Font.PLAIN, 12));
-
-        area2 = new JTextArea(12, 70);
-        area2.setFont(new Font("Monospaced", Font.PLAIN, 12));
-
-
-        ((AbstractDocument) area1.getDocument()).setDocumentFilter(inputDec);
-        area2.setEditable(false);
 
         initializeActions();
 
@@ -78,12 +70,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
                         JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                         JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         content.add(scroll1, BorderLayout.CENTER);
-
-        JScrollPane scroll2 =
-                new JScrollPane(area2,
-                        JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                        JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-        content.add(scroll2, BorderLayout.CENTER);
 
         ipAddress = new JTextField("localhost");
         content.add(ipAddress, BorderLayout.CENTER);
@@ -120,7 +106,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
         pack();
         KeyListener k1 = new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
-                System.out.println(((AbstractDocument) area1.getDocument()).getDocumentFilter());
                 changed = true;
                 save.setEnabled(true);
                 saveAs.setEnabled(true);
@@ -130,15 +115,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
         area1.addKeyListener(k1);
         setTitle("Disconnected");
         setVisible(true);
-        area1.insert("Example of how to capture stuff from the event queue and replay it in another buffer.\n" +
-                "Try to type and delete stuff in the top area.\n" +
-                "Then figure out how it works.\n", 0);
-
-        //initialize the replayer on area2
-        EventReplayer localReplayer = new EventReplayer(inputDec, new LocalOutputStrategy(area2));
-        localReplayThread = new Thread(localReplayer);
-        localReplayThread.start();
-
         dialog = new JFileChooser(System.getProperty("user.dir"));
 
         this.addWindowListener(new WindowAdapter() {
@@ -284,6 +260,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
         area1.setText("");
         updateConnectionMenuButtons(true);
 
+        ((AbstractDocument) area1.getDocument()).setDocumentFilter(inputDec);
         //sets the EventReplayer to listening mode
         updateLocalReplayer(outputDec,new FilterIgnoringOutputStrategy(area1));
 
@@ -308,6 +285,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
     public void goOffline() {
         //sets the Eventreplayer to offline mode
         updateLocalReplayer(inputDec,new LocalOutputStrategy(area1));
+        ((AbstractDocument) area1.getDocument()).setDocumentFilter(null);
 
         //resets the ui:
         updateConnectionMenuButtons(false);
@@ -339,7 +317,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
         AbstractDocument document = (AbstractDocument) area1.getDocument();
         document.setDocumentFilter(null);
         area1.setText("");
-        area2.setText("");
         document.setDocumentFilter(filter);
     }
 
