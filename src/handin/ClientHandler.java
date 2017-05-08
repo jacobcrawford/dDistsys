@@ -1,15 +1,9 @@
 package handin;
 
 import handin.communication.Client;
-import handin.output_strategy.FilterIgnoringOutputStrategy;
-import handin.output_strategy.LocalOutputStrategy;
-import handin.output_strategy.OutputStrategy;
 import handin.output_strategy.RemoteOutputStrategy;
 import handin.text_events.MyTextEvent;
 
-import javax.swing.text.AbstractDocument;
-import javax.swing.text.DocumentFilter;
-import java.awt.*;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -22,7 +16,6 @@ import java.net.SocketException;
 public class ClientHandler {
 
     private Socket socket;
-    private Thread localReplayThread;
 
     public String start(String ip, int port,Editor editor) {
         Client client = new Client(port);
@@ -41,21 +34,8 @@ public class ClientHandler {
     }
 
     public void stop() {
-
+        //TODO implement this
     }
-
-    /**
-     * Interrupts the old localreplay, and starts a new one, with the given DocumentEventCapturer.
-     *
-     * @param dec, the DocumentEventCapturer, which the replayer will take events from.
-     */
-    private void updateLocalReplayer(DocumentEventCapturer dec, OutputStrategy outputStrategy) {
-        localReplayThread.interrupt();
-        EventReplayer localReplayer = new EventReplayer(dec, outputStrategy);
-        localReplayThread = new Thread(localReplayer);
-        localReplayThread.start();
-    }
-
 
     /**
      * Will receive events from the socket's InputStream, until the socket closes/an exception is cast.
@@ -79,7 +59,6 @@ public class ClientHandler {
                 Object o = fromClient.readObject();
                 if (o instanceof MyTextEvent) {
                     MyTextEvent event = (MyTextEvent) o;
-                    int a = 1; //TODO remove
                     outputDec.addMyTextEvent(event);
                 } else {
                     System.out.println("Unreadable object received");

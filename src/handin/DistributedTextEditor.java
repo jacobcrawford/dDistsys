@@ -245,6 +245,11 @@ public class DistributedTextEditor extends JFrame implements Editor {
                 Coordinator coordinator = new Coordinator(server);
                 coordinator.start();
 
+                //start local "client"
+                ClientHandler clientHandler = new ClientHandler();
+                System.out.println(clientHandler.start("localhost",getPortNumber(), (Editor) me));
+
+
 //                new Thread(() -> {
 //
 //
@@ -267,7 +272,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
             public void actionPerformed(ActionEvent e) {
                 ClientHandler clientHandler = new ClientHandler();
                 setTitle(clientHandler.start(getIP(),getPortNumber(), (Editor) me));
-                //TODO Make client nok write to own area
             }
         };
     }
@@ -339,45 +343,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
         document.setDocumentFilter(filter);
     }
 
-
-    /**
-     * Will receive events from the socket's InputStream, until the socket closes/an exception is cast.
-     * In case of SocketException, or EOFException, the textFields are reset
-     *
-     * @param socket, the socket, which InputStream is read from.
-     */
-    private void sendAndReceiveEvents(Socket socket) {
-        // Create an event replayer that listens on inputDec and outputs to the socket
-        Thread onlineReplayThread = new Thread(
-                new EventReplayer(inputDec, new RemoteOutputStrategy(socket))
-        );
-        onlineReplayThread.start();
-
-        // Send textevents from the input stream to the outputDec
-        try {
-            final ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
-            while (socket.isConnected() && !socket.isClosed()) {
-                Object o = fromClient.readObject();
-                if (o instanceof MyTextEvent) {
-                    MyTextEvent event = (MyTextEvent) o;
-                    outputDec.addMyTextEvent(event);
-                } else {
-                    System.out.println("Unreadable object received");
-                }
-            }
-            fromClient.close();
-
-        } catch (SocketException | EOFException s) {
-            // SocketException is thrown when you disconnect
-            // EOFException is thrown when the other disconnects
-            emptyTextAreas();
-        } catch (IOException | ClassNotFoundException ex) {
-            ex.printStackTrace();
-        }
-
-        // Stop sending from inputDec to the socket
-        onlineReplayThread.interrupt();
-    }
 
     private int getPortNumber() {
         return Integer.parseInt(portNumber.getText());
