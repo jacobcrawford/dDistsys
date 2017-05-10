@@ -11,14 +11,14 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.LinkedBlockingDeque;
 
-public class Coordinator {
+public class Sequencer {
     private LinkedBlockingDeque<MyTextEvent> eventQueue;
     private OutputHandler outputHandler;
     private Thread listenThread;
     private Server server;
     private JTextArea textArea;
 
-    public Coordinator(Server server, JTextArea textArea) {
+    public Sequencer(Server server, JTextArea textArea) {
         this.textArea = textArea;
         this.eventQueue = new LinkedBlockingDeque<>();
         this.outputHandler = new OutputHandler(eventQueue);

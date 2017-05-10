@@ -24,6 +24,7 @@ public class OutputHandler {
         this.outputStreams = new LinkedList<>();
         this.eventQueue = eventQueue;
         this.pastTextEvents = new HashMap<>();
+        this.pastTextEvents.put(0, new TextInsertEvent(0, ""));
     }
 
     public void addClient(ObjectOutputStream newStream) {
