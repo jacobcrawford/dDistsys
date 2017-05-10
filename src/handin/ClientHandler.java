@@ -1,9 +1,12 @@
 package handin;
 
 import handin.communication.Client;
+import handin.output_strategy.FilterIgnoringOutputStrategy;
+import handin.output_strategy.OutputStrategy;
 import handin.output_strategy.RemoteOutputStrategy;
 import handin.text_events.MyTextEvent;
 
+import javax.swing.*;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -14,8 +17,9 @@ public class ClientHandler {
 
     public static int number = 0;
     private Socket socket;
+    private Thread localReplayThread;
 
-    public String start(String ip, int port,Editor editor) {
+    public String start(String ip, int port, Editor editor, DocumentEventCapturer dec, JTextArea area) {
         Client client = new Client(port);
         socket = client.connectToServer(ip);
         System.out.println("connection");
@@ -24,6 +28,9 @@ public class ClientHandler {
         }
 
         editor.goOnline();
+        //sets the EventReplayer to listening mode
+        updateLocalReplayer(dec, new FilterIgnoringOutputStrategy(area));
+
         new Thread(() -> {
             sendAndReceiveEvents(socket,editor);
             editor.goOffline();
@@ -82,6 +89,18 @@ public class ClientHandler {
 
         // Stop sending from inputDec to the socket
         onlineReplayThread.interrupt();
+    }
+
+    /**
+     * Interrupts the old localreplay, and starts a new one, with the given DocumentEventCapturer.
+     *
+     * @param dec, the DocumentEventCapturer, which the replayer will take events from.
+     */
+    private void updateLocalReplayer(DocumentEventCapturer dec, OutputStrategy outputStrategy) {
+        localReplayThread.interrupt();
+        EventReplayer localReplayer = new EventReplayer(dec, outputStrategy);
+        localReplayThread = new Thread(localReplayer);
+        localReplayThread.start();
     }
 
 }

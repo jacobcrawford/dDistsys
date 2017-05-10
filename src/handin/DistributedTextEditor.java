@@ -1,9 +1,6 @@
 package handin;
 
 import handin.communication.Server;
-import handin.output_strategy.FilterIgnoringOutputStrategy;
-import handin.output_strategy.LocalOutputStrategy;
-import handin.output_strategy.OutputStrategy;
 
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
@@ -222,7 +219,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
                 //start local "client"
                 clientHandler = new ClientHandler();
-                System.out.println(clientHandler.start("localhost", getPortNumber(), (Editor) me));
+                System.out.println(clientHandler.start("localhost", getPortNumber(), (Editor) me, outputDec, area1));
 
             }
         };
@@ -231,7 +228,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
             @Override
             public void actionPerformed(ActionEvent e) {
                 clientHandler = new ClientHandler();
-                setTitle(clientHandler.start(getIP(), getPortNumber(), (Editor) me));
+                setTitle(clientHandler.start(getIP(), getPortNumber(), (Editor) me, outputDec, area1));
             }
         };
     }
@@ -257,9 +254,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
         ((AbstractDocument) area1.getDocument()).setDocumentFilter(inputDec);
 
-        //sets the EventReplayer to listening mode
-        updateLocalReplayer(outputDec, new FilterIgnoringOutputStrategy(area1));
-
         changed = false;
         save.setEnabled(false);
         saveAs.setEnabled(false);
@@ -270,7 +264,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
      */
     public void goOffline() {
         //sets the Eventreplayer to offline mode
-        updateLocalReplayer(inputDec, new LocalOutputStrategy(area1));
         ((AbstractDocument) area1.getDocument()).setDocumentFilter(null);
 
         //resets the ui:
@@ -279,18 +272,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
         setTitle("Disconnected");
 
         emptyTextAreas();
-    }
-
-    /**
-     * Interrupts the old localreplay, and starts a new one, with the given DocumentEventCapturer.
-     *
-     * @param dec, the DocumentEventCapturer, which the replayer will take events from.
-     */
-    private void updateLocalReplayer(DocumentEventCapturer dec, OutputStrategy outputStrategy) {
-        localReplayThread.interrupt();
-        EventReplayer localReplayer = new EventReplayer(dec, outputStrategy);
-        localReplayThread = new Thread(localReplayer);
-        localReplayThread.start();
     }
 
     /**
