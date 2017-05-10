@@ -72,42 +72,42 @@ public class OutputHandler {
             MyTextEvent oldEvent = pastTextEvents.get(i);
             System.out.println(i + ": " + oldEvent);
 
-            int a = newEvent.getOffset();
-            int p = newEvent.getOffset() + newEvent.getLength();
-            int j = oldEvent.getOffset();
-            int k = oldEvent.getOffset() + oldEvent.getLength();
+            int newEventOffset = newEvent.getOffset();
+            int newEventEndPoint = newEvent.getOffset() + newEvent.getLength();
+            int oldEventOffset = oldEvent.getOffset();
+            int oldEventEndPoint = oldEvent.getOffset() + oldEvent.getLength();
 
             //if the previous event changes overlaps or is before this event, adjust offset.
-            if (p >= j) {
+            if (newEventEndPoint >= oldEventOffset) {
                 if (oldEvent instanceof TextInsertEvent) {
                     if (newEvent instanceof TextRemoveEvent) {
-                        if (a >= j) {
-                            newEvent.setOffset(a + oldEvent.getLength());
+                        if (newEventOffset >= oldEventOffset) {
+                            newEvent.setOffset(newEventOffset + oldEvent.getLength());
                         } else {
                             //TODO handle if the old insert splits the new event
                             newEvent.setLength(0);
                         }
                     } else {
-                        newEvent.setOffset(a + oldEvent.getLength());
+                        newEvent.setOffset(newEventOffset + oldEvent.getLength());
                     }
                 } else if (oldEvent instanceof TextRemoveEvent) {
 
                     if (newEvent instanceof TextRemoveEvent) {
                         // the removeevents overlap, change length/offset, so that we dont double remove
-                        if (a >= j) {
+                        if (newEventOffset >= oldEventOffset) {
                             //The oldevents begins before the new. only remove from the point that the old event stopped removing.
-                            newEvent.setOffset(Math.max(a, k));
-                            newEvent.setLength(p - newEvent.getOffset());
+                            newEvent.setOffset(Math.max(newEventOffset, oldEventEndPoint));
+                            newEvent.setLength(newEventEndPoint - newEvent.getOffset());
                         } else {
                             //The old revent begins later in the text, only remove until the beginning of it
-                            newEvent.setLength(j - a);
+                            newEvent.setLength(oldEventOffset - newEventOffset);
                             //the old event doesn't remove all the way to the end of the new event, take care of the tail.
-                            if (k < p) {
+                            if (oldEventEndPoint < newEventEndPoint) {
                                 //TODO handle if the old remove even splits the new in two parts
                             }
                         }
                     } else {
-                        newEvent.setOffset(a - oldEvent.getLength());
+                        newEvent.setOffset(newEventOffset - oldEvent.getLength());
                     }
                 }
             }
