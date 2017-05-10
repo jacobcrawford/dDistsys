@@ -28,9 +28,7 @@ public class InputHandler implements Runnable {
                     System.out.println("event received!");
                     eventQueue.add(event);
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
+            } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
 

@@ -135,7 +135,15 @@ public class OutputHandler {
                             newEvent.setLength(oldEventOffset - newEventOffset);
                             //the old event doesn't remove all the way to the end of the new event, take care of the tail.
                             if (oldEventEndPoint < newEventEndPoint) {
-                                //TODO handle if the old remove even splits the new in two parts
+                                int extraEventOffSet = oldEventEndPoint - oldEvent.getLength();
+                                int extraEventLength = newEventEndPoint - oldEventEndPoint;
+
+                                TextRemoveEvent extraEvent = new TextRemoveEvent(extraEventOffSet, extraEventLength);
+                                extraEvent.setNumber(i);
+                                eventQueue.add(extraEvent);
+
+                                System.out.println("New event removing " + newEvent.getLength() + " from " + newEvent.getOffset());
+                                System.out.println("Extra event removing " + extraEvent.getLength() + " from " + extraEvent.getOffset());
                             }
                         }
                     } else {
