@@ -106,8 +106,9 @@ public class OutputHandler {
                             // oldEventOffset > newEventOffset
                             // slet fra newEventOffset til oldEventOffset (længde X)
                             // og slet fra oldEventOffset + length(oldEvent) til length(newEvent)-X
-                            int extraEventOffSet = oldEventOffset + oldEvent.getLength() - (oldEventOffset - newEventOffset);
-                            int extraEventLength = newEvent.getLength() - (oldEventOffset - newEventOffset);
+                            int extraEventOffSet = oldEventEndPoint;
+                            int extraEventLength = newEventEndPoint - oldEventOffset;
+
                             TextRemoveEvent extraEvent = new TextRemoveEvent(extraEventOffSet, extraEventLength);
                             extraEvent.setNumber(i);
                             eventQueue.add(extraEvent);
@@ -127,8 +128,8 @@ public class OutputHandler {
                         // the removeevents overlap, change length/offset, so that we dont double remove
                         if (newEventOffset >= oldEventOffset) {
                             //The oldevents begins before the new. only remove from the point that the old event stopped removing.
-                            newEvent.setOffset(Math.max(newEventOffset, oldEventEndPoint));
-                            newEvent.setLength(newEventEndPoint - newEvent.getOffset());
+                            newEvent.setOffset(Math.max(newEventOffset, oldEventEndPoint) - (Math.min(newEventOffset, oldEventEndPoint) - (oldEventOffset)));
+                            newEvent.setLength(newEventEndPoint - newEventOffset);
                         } else {
                             //The old revent begins later in the text, only remove until the beginning of it
                             newEvent.setLength(oldEventOffset - newEventOffset);
