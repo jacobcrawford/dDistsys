@@ -84,8 +84,19 @@ public class OutputHandler {
                         if (newEventOffset >= oldEventOffset) {
                             newEvent.setOffset(newEventOffset + oldEvent.getLength());
                         } else {
-                            //TODO handle if the old insert splits the new event
-                            newEvent.setLength(0);
+                            // oldEvent = insert(bc)
+                            // newEvent = delete(abcd)
+
+                            // oldEventOffset > newEventOffset
+                            // slet fra newEventOffset til oldEventOffset (længde X)
+                            // og slet fra oldEventOffset + length(oldEvent) til length(newEvent)-X
+                            int extraEventOffSet = oldEventOffset + oldEvent.getLength();
+                            int extraEventLength = newEvent.getLength() - (oldEventOffset - newEventOffset);
+                            TextRemoveEvent extraEvent = new TextRemoveEvent(extraEventOffSet, extraEventLength);
+                            eventQueue.add(extraEvent);
+
+                            newEvent.setOffset(newEventOffset);
+                            newEvent.setLength(oldEventOffset - newEventOffset);
                         }
                     } else {
                         newEvent.setOffset(newEventOffset + oldEvent.getLength());
