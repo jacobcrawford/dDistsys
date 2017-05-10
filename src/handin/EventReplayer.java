@@ -12,8 +12,8 @@ import handin.text_events.MyTextEvent;
  */
 public class EventReplayer implements Runnable {
 
-    private DocumentEventCapturer dec;
-    private OutputStrategy outputStrategy;
+    private final DocumentEventCapturer dec;
+    private final OutputStrategy outputStrategy;
 
     public EventReplayer(DocumentEventCapturer dec, OutputStrategy outputStrategy) {
         this.dec = dec;

@@ -10,7 +10,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,11 +23,10 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private static Path posFile;
     private boolean changed = false;
 
-    private JTextArea area1;
-    private JTextArea area2;
-    private JTextField ipAddress;
-    private JTextField portNumber;
-    private JFileChooser dialog;
+    private final JTextArea textArea;
+    private final JTextField ipAddress;
+    private final JTextField portNumber;
+    private final JFileChooser dialog;
     private String currentFile = "Untitled";
     private Server server;
     private Action disconnect;
@@ -42,18 +40,13 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private ClientHandler clientHandler;
     private Sequencer sequencer;
 
-    private DocumentEventCapturer inputDec = new DocumentEventCapturer();
-    private DocumentEventCapturer outputDec = new DocumentEventCapturer();
+    private final DocumentEventCapturer inputDec = new DocumentEventCapturer();
+    private final DocumentEventCapturer outputDec = new DocumentEventCapturer();
 
-    private Thread localReplayThread = new Thread();
+    private DistributedTextEditor(int x) {
 
-    private Socket socket;
-    private boolean listening;
-
-    private DistributedTextEditor(int x, int y) {
-
-        area1 = new JTextArea(12, 70);
-        area1.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        textArea = new JTextArea(12, 70);
+        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
 
         initializeActions();
 
@@ -61,7 +54,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 
         JScrollPane scroll1 =
-                new JScrollPane(area1,
+                new JScrollPane(textArea,
                         JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                         JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         content.add(scroll1, BorderLayout.CENTER);
@@ -78,7 +71,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
         JMB.add(file);
         JMB.add(edit);
 
-        this.setLocation(x, y);
+        this.setLocation(x, 0);
 
         file.add(listen);
         file.add(connect);
@@ -99,6 +92,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         pack();
+        // Activates the "Save" and "Save as..." menus on any key press on the text area
         KeyListener k1 = new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
                 changed = true;
@@ -106,8 +100,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
                 saveAs.setEnabled(true);
             }
         };
-        //TODO what does this do?
-        area1.addKeyListener(k1);
+        textArea.addKeyListener(k1);
         setTitle("Disconnected");
         setVisible(true);
         dialog = new JFileChooser(System.getProperty("user.dir"));
@@ -124,13 +117,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
     public static void main(String[] arg) throws IOException {
         String visited = "true";
         posFile = Paths.get(".pos");
-
-        if (arg.length > 0) {
-            Settings.arbitraryDelay = Integer.parseInt(arg[0]);
-        }
-
         int x;
-
         if (!posFile.toFile().exists() || !Files.readAllLines(posFile).get(0).equals(visited)) {
             x = 0;
             List<String> lines = Collections.singletonList(visited);
@@ -140,8 +127,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
             List<String> lines = Collections.singletonList("");
             Files.write(posFile, lines, Charset.forName("UTF-8"));
         }
-
-        new DistributedTextEditor(x, 0);
+        new DistributedTextEditor(x);
     }
 
     private static void removePosFile() {
@@ -171,7 +157,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
                 if (server != null) server.deregisterOnPort();
                 if (sequencer != null) sequencer.stop();
                 clientHandler.stop();
-
             }
         };
         save = new AbstractAction("save") {
@@ -194,7 +179,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
                 System.exit(0);
             }
         };
-        ActionMap m = area1.getActionMap();
+        ActionMap m = textArea.getActionMap();
         copy = m.get(DefaultEditorKit.copyAction);
         paste = m.get(DefaultEditorKit.pasteAction);
 
@@ -214,12 +199,12 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
                 goOnline();
 
-                sequencer = new Sequencer(server, area1);
+                sequencer = new Sequencer(server, textArea);
                 sequencer.start();
 
                 //start local "client"
                 clientHandler = new ClientHandler();
-                System.out.println(clientHandler.start("localhost", getPortNumber(), (Editor) me, outputDec, area1));
+                System.out.println(clientHandler.start("localhost", getPortNumber(), (Editor) me, outputDec, textArea));
 
             }
         };
@@ -228,7 +213,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
             @Override
             public void actionPerformed(ActionEvent e) {
                 clientHandler = new ClientHandler();
-                setTitle(clientHandler.start(getIP(), getPortNumber(), (Editor) me, outputDec, area1));
+                setTitle(clientHandler.start(getIP(), getPortNumber(), (Editor) me, outputDec, textArea));
             }
         };
     }
@@ -249,10 +234,10 @@ public class DistributedTextEditor extends JFrame implements Editor {
      */
     public void goOnline() {
         saveOld();
-        area1.setText("");
+        textArea.setText("");
         updateConnectionMenuButtons(true);
 
-        ((AbstractDocument) area1.getDocument()).setDocumentFilter(inputDec);
+        ((AbstractDocument) textArea.getDocument()).setDocumentFilter(inputDec);
 
         changed = false;
         save.setEnabled(false);
@@ -264,7 +249,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
      */
     public void goOffline() {
         //sets the Eventreplayer to offline mode
-        ((AbstractDocument) area1.getDocument()).setDocumentFilter(null);
+        ((AbstractDocument) textArea.getDocument()).setDocumentFilter(null);
 
         //resets the ui:
         updateConnectionMenuButtons(false);
@@ -279,11 +264,11 @@ public class DistributedTextEditor extends JFrame implements Editor {
      * Then, it is removed, the areas are emptied, and the filter is reinstated.
      */
     public void emptyTextAreas() {
-        DocumentFilter filter = ((AbstractDocument) area1.getDocument()).getDocumentFilter();
+        DocumentFilter filter = ((AbstractDocument) textArea.getDocument()).getDocumentFilter();
 
-        AbstractDocument document = (AbstractDocument) area1.getDocument();
+        AbstractDocument document = (AbstractDocument) textArea.getDocument();
         document.setDocumentFilter(null);
-        area1.setText("");
+        textArea.setText("");
         document.setDocumentFilter(filter);
     }
 
@@ -311,7 +296,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private void saveFile(String fileName) {
         try {
             FileWriter w = new FileWriter(fileName);
-            area1.write(w);
+            textArea.write(w);
             w.close();
             currentFile = fileName;
             changed = false;

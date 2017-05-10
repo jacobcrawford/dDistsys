@@ -15,9 +15,17 @@ import java.net.SocketException;
 
 public class ClientHandler {
 
-    public static int number = 0;
+    private int number = 0;
     private Socket socket;
-    private Thread localReplayThread;
+    private Thread localReplayThread = new Thread();
+
+    public void setNumber(int number) {
+        this.number = number;
+    }
+
+    public int getNumber() {
+        return number;
+    }
 
     public String start(String ip, int port, Editor editor, DocumentEventCapturer dec, JTextArea area) {
         Client client = new Client(port);
@@ -29,19 +37,18 @@ public class ClientHandler {
 
         editor.goOnline();
         //sets the EventReplayer to listening mode
-        updateLocalReplayer(dec, new FilterIgnoringOutputStrategy(area));
+        updateLocalReplayer(dec, new FilterIgnoringOutputStrategy(area, this));
 
         new Thread(() -> {
-            sendAndReceiveEvents(socket,editor);
+            sendAndReceiveEvents(socket, editor);
             editor.goOffline();
         }).start();
         return "Connected to " + ip + " on port " + port;
     }
 
     public void stop() {
-        //TODO implement this
-        try{
-            if (socket!=null)socket.close();
+        try {
+            if (socket != null) socket.close();
             System.out.println("Client disconnected");
         } catch (IOException e) {
             e.printStackTrace();
@@ -59,7 +66,7 @@ public class ClientHandler {
         DocumentEventCapturer outputDec = editor.getOutDec();
         // Create an event replayer that listens on inputDec and outputs to the socket
         Thread onlineReplayThread = new Thread(
-                new EventReplayer(inputDec, new RemoteOutputStrategy(socket))
+                new EventReplayer(inputDec, new RemoteOutputStrategy(socket, this))
         );
         onlineReplayThread.start();
 

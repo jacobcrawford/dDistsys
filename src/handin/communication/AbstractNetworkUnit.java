@@ -7,9 +7,9 @@ import java.net.UnknownHostException;
  * Made by Rasmus on 05/04/2017.
  */
 public abstract class AbstractNetworkUnit {
-    protected int serverPortNumber;
+    protected final int serverPortNumber;
 
-    public AbstractNetworkUnit(int serverPortNumber) {
+    protected AbstractNetworkUnit(int serverPortNumber) {
         this.serverPortNumber = serverPortNumber;
     }
 

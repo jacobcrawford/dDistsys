@@ -7,7 +7,9 @@ import handin.text_events.TextRemoveEvent;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.net.SocketException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -15,10 +17,11 @@ import java.util.concurrent.BlockingQueue;
 public class OutputHandler {
 
     //to remember past events.
-    private HashMap<Integer, MyTextEvent> pastTextEvents;
-    private BlockingQueue<MyTextEvent> eventQueue;
-    private List<ObjectOutputStream> outputStreams;
+    private final HashMap<Integer, MyTextEvent> pastTextEvents;
+    private final BlockingQueue<MyTextEvent> eventQueue;
+    private final List<ObjectOutputStream> outputStreams;
     private int number = 0;
+    private Thread broadcastThread;
 
     public OutputHandler(BlockingQueue<MyTextEvent> eventQueue) {
         this.outputStreams = new LinkedList<>();
@@ -31,34 +34,32 @@ public class OutputHandler {
         outputStreams.add(newStream);
     }
 
-    public void beginBroadcasting () {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                MyTextEvent event = null;
-                while (true) {
-                    try {
-                        event = eventQueue.take();
+    public void beginBroadcasting() {
+        broadcastThread = new Thread(() -> {
+            MyTextEvent event = null;
+            while (!Thread.interrupted()) {
+                try {
+                    event = eventQueue.take();
 
-                        System.out.println("received event with last change number: " + event.getNumber() + ", last change had number: " + number);
-                        if (event.getNumber() < number && Settings.offsetAdjusting) {
-                            System.out.println("adjusting!");
-                            adjustOffset(event);
-                        }
-                        number++;
-                        event.setNumber(number);
-                        //remember past events
-                        System.out.println("saving: " + event + " as number " + event.getNumber());
-                        pastTextEvents.put(event.getNumber(), event);
-                        //TODO remove old events
-                        //System.out.println("event received!");
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+                    System.out.println("received event with last change number: " + event.getNumber() + ", last change had number: " + number);
+                    if (event.getNumber() < number) {
+                        System.out.println("adjusting!");
+                        adjustOffset(event);
                     }
-                    broadcast(event);
+                    number++;
+                    event.setNumber(number);
+                    //remember past events
+                    System.out.println("saving: " + event + " as number " + event.getNumber());
+                    pastTextEvents.put(event.getNumber(), event);
+
+                    //TODO remove old events
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
+                broadcast(event);
             }
-        }).start();
+        });
+        broadcastThread.start();
     }
 
     /**
@@ -84,32 +85,9 @@ public class OutputHandler {
                         if (newEventOffset >= oldEventOffset) {
                             newEvent.setOffset(newEventOffset + oldEvent.getLength());
                         } else {
-//                            // Delete from oldEventOffset to the newEventOffset
-//                            int lengthBeforeInsertion = oldEventOffset - newEventOffset;
-//                            int offsetBeforeInsertion = oldEventOffset;
-//                            // Also delete from the end of the insertion to the rest
-//                            int lengthAfterInsertion = newEvent.getLength() - lengthBeforeInsertion;
-//                            int offsetAfterInsertion = offsetBeforeInsertion + lengthBeforeInsertion + oldEvent.getLength();
-//
-//                            TextRemoveEvent extraEvent = new TextRemoveEvent(offsetAfterInsertion, lengthAfterInsertion);
-//                            extraEvent.setNumber(i);
-//                            eventQueue.add(extraEvent);
-//
-//                            System.out.println("OldEventOffset: " + offsetBeforeInsertion);
-//                            newEvent.setOffset(offsetBeforeInsertion);
-//                            newEvent.setLength(lengthBeforeInsertion);
-
-
-                            // oldEvent = insert(bc)
-                            // newEvent = delete(abcd)
-
-                            // oldEventOffset > newEventOffset
-                            // slet fra newEventOffset til oldEventOffset (længde X)
-                            // og slet fra oldEventOffset + length(oldEvent) til length(newEvent)-X
-                            int extraEventOffSet = oldEventEndPoint;
                             int extraEventLength = newEventEndPoint - oldEventOffset;
 
-                            TextRemoveEvent extraEvent = new TextRemoveEvent(extraEventOffSet, extraEventLength);
+                            TextRemoveEvent extraEvent = new TextRemoveEvent(oldEventEndPoint, extraEventLength);
                             extraEvent.setNumber(i);
                             eventQueue.add(extraEvent);
 
@@ -163,18 +141,22 @@ public class OutputHandler {
     private void broadcast(MyTextEvent event) {
         //
         System.out.println("BroadCast!");
-        for (ObjectOutputStream outputStream: outputStreams) {
+        for (Iterator<ObjectOutputStream> iterator = outputStreams.iterator(); iterator.hasNext(); ) {
+            ObjectOutputStream outputStream = iterator.next();
             try {
                 outputStream.writeObject(event);
+            } catch (SocketException e) {
+                System.out.println("Dead OutputStream removed from OutputHandler");
+                iterator.remove();
             } catch (IOException e) {
                 e.printStackTrace();
-                //TODO Handle crash
             }
         }
     }
 
     public void stop() {
-        for (OutputStream out: outputStreams){
+        broadcastThread.interrupt();
+        for (OutputStream out : outputStreams) {
             try {
                 out.close();
             } catch (IOException e) {

@@ -12,11 +12,11 @@ import java.net.Socket;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class Sequencer {
-    private LinkedBlockingDeque<MyTextEvent> eventQueue;
-    private OutputHandler outputHandler;
+    private final LinkedBlockingDeque<MyTextEvent> eventQueue;
+    private final OutputHandler outputHandler;
     private Thread listenThread;
-    private Server server;
-    private JTextArea textArea;
+    private final Server server;
+    private final JTextArea textArea;
 
     public Sequencer(Server server, JTextArea textArea) {
         this.textArea = textArea;
