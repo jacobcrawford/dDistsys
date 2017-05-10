@@ -29,25 +29,32 @@ public class RemoteOutputStrategy implements OutputStrategy {
 
     @Override
     public void output(MyTextEvent event) {
-        try {
-            if (socket.isConnected()) {
-                event.setNumber(ClientHandler.number);
-                //TODO find better way to track number
+        if (socket.isConnected()) {
+            event.setNumber(ClientHandler.number);
+            //TODO find better way to track number
 
-                System.out.println("sending event! with number: " + event.getNumber());
-                try {
-                    Thread.sleep(Settings.arbitraryDelay);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+            System.out.println("sending event! with number: " + event.getNumber());
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(Settings.arbitraryDelay);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        out.writeObject(event);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
-                out.writeObject(event);
+            }).start();
 
-            } else {
-                System.out.println("socket not connected!");
-            }
 
-        } catch (IOException e) {
-            e.printStackTrace();
+        } else {
+            System.out.println("socket not connected!");
         }
+
     }
 }

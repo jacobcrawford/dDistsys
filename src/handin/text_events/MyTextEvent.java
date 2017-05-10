@@ -20,6 +20,8 @@ public abstract class MyTextEvent implements Serializable {
 
     public abstract int getLength();
 
+    public abstract void setLength(int i);
+
     public int getNumber() {
         return number;
     }

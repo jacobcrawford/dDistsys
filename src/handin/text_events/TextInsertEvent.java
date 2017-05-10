@@ -17,5 +17,20 @@ public class TextInsertEvent extends MyTextEvent {
     public int getLength() {
         return text.length();
     }
+
+    @Override
+    public void setLength(int i) {
+        if (i == 0) {
+            text = "";
+            System.out.println("this shouldn't happen!");
+        } else {
+            throw new UnsupportedOperationException("cant change length of insert event");
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "{insert " + text + " at " + getOffset() + "}";
+    }
 }
 

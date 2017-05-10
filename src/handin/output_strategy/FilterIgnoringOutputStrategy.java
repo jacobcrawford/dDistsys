@@ -1,6 +1,6 @@
 package handin.output_strategy;
 
-import handin.DocumentEventCapturer;
+import handin.ClientHandler;
 import handin.text_events.MyTextEvent;
 import handin.text_events.TextInsertEvent;
 import handin.text_events.TextRemoveEvent;
@@ -10,9 +10,6 @@ import javax.swing.text.AbstractDocument;
 import javax.swing.text.DocumentFilter;
 import java.awt.*;
 
-/**
- * Created by hjort on 5/3/17.
- */
 public class FilterIgnoringOutputStrategy implements OutputStrategy {
     private JTextArea area;
 
@@ -34,6 +31,7 @@ public class FilterIgnoringOutputStrategy implements OutputStrategy {
 //                    filter.
                     area.insert(tie.getText(), event.getOffset());
                     doc.setDocumentFilter(filter);
+                        ClientHandler.number = event.getNumber();
                     }
                 });
             } else if (event instanceof TextRemoveEvent) {
@@ -44,6 +42,7 @@ public class FilterIgnoringOutputStrategy implements OutputStrategy {
                         doc.setDocumentFilter(null);
                         area.replaceRange(null, tre.getOffset(), tre.getOffset() + tre.getLength());
                         doc.setDocumentFilter(filter);
+                        ClientHandler.number = event.getNumber();
                     }
                 });
             }

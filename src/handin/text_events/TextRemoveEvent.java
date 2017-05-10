@@ -13,4 +13,14 @@ public class TextRemoveEvent extends MyTextEvent {
     public int getLength() {
         return length;
     }
+
+    @Override
+    public void setLength(int length) {
+        this.length = length;
+    }
+
+    @Override
+    public String toString() {
+        return "{remove " + getLength() + " starting from " + getOffset() + "}";
+    }
 }

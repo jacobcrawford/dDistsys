@@ -48,6 +48,7 @@ public class OutputHandler {
                         number++;
                         event.setNumber(number);
                         //remember past events
+                        System.out.println("saving: " + event + " as number " + event.getNumber());
                         pastTextEvents.put(event.getNumber(), event);
                         //TODO remove old events
                         //System.out.println("event received!");
@@ -66,21 +67,57 @@ public class OutputHandler {
      * @param newEvent, the event, that is about to be inserted
      */
     private void adjustOffset(MyTextEvent newEvent) {
-        for (int i = newEvent.getNumber(); i <= number; i++) {
-            MyTextEvent textEvent = pastTextEvents.get(i);
+        System.out.println("start: " + newEvent);
+        for (int i = newEvent.getNumber() + 1; i <= number; i++) {
+            MyTextEvent oldEvent = pastTextEvents.get(i);
+            System.out.println(i + ": " + oldEvent);
+
+            int a = newEvent.getOffset();
+            int p = newEvent.getOffset() + newEvent.getLength();
+            int j = oldEvent.getOffset();
+            int k = oldEvent.getOffset() + oldEvent.getLength();
 
             //if the previous event changes overlaps or is before this event, adjust offset.
-            if (newEvent.getOffset() + newEvent.getLength() >= textEvent.getOffset()) {
-                if (textEvent instanceof TextInsertEvent) {
-                    newEvent.setOffset(newEvent.getOffset() + textEvent.getLength());
-                } else if (textEvent instanceof TextRemoveEvent) {
-                    newEvent.setOffset(newEvent.getOffset() - textEvent.getLength());
+            if (p >= j) {
+                if (oldEvent instanceof TextInsertEvent) {
+                    if (newEvent instanceof TextRemoveEvent) {
+                        if (a >= j) {
+                            newEvent.setOffset(a + oldEvent.getLength());
+                        } else {
+                            //TODO handle if the old insert splits the new event
+                            newEvent.setLength(0);
+                        }
+                    } else {
+                        newEvent.setOffset(a + oldEvent.getLength());
+                    }
+                } else if (oldEvent instanceof TextRemoveEvent) {
+
+                    if (newEvent instanceof TextRemoveEvent) {
+                        // the removeevents overlap, change length/offset, so that we dont double remove
+                        if (a >= j) {
+                            //The oldevents begins before the new. only remove from the point that the old event stopped removing.
+                            newEvent.setOffset(Math.max(a, k));
+                            newEvent.setLength(p - newEvent.getOffset());
+                        } else {
+                            //The old revent begins later in the text, only remove until the beginning of it
+                            newEvent.setLength(j - a);
+                            //the old event doesn't remove all the way to the end of the new event, take care of the tail.
+                            if (k < p) {
+                                //TODO handle if the old remove even splits the new in two parts
+                            }
+                        }
+                    } else {
+                        newEvent.setOffset(a - oldEvent.getLength());
+                    }
                 }
             }
+            if (newEvent.getOffset() < 0) {
+                newEvent.setOffset(0);
+            } else if (newEvent.getLength() < 0) {
+                newEvent.setLength(0);
+            }
         }
-        if (newEvent.getOffset() < 0) {
-            newEvent.setOffset(0);
-        }
+        System.out.println("end: " + newEvent);
     }
 
     private void broadcast(MyTextEvent event) {
