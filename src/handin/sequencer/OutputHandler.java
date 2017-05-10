@@ -1,4 +1,4 @@
-package handin;
+package handin.sequencer;
 
 import handin.text_events.MyTextEvent;
 import handin.text_events.TextInsertEvent;

@@ -1,4 +1,4 @@
-package handin;
+package handin.sequencer;
 
 import handin.communication.Server;
 import handin.text_events.MyTextEvent;

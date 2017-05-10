@@ -1,6 +1,7 @@
 package handin;
 
 import handin.communication.Server;
+import handin.sequencer.Sequencer;
 
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;
