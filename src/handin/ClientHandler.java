@@ -63,7 +63,7 @@ public class ClientHandler {
                 Object o = fromClient.readObject();
                 if (o instanceof MyTextEvent) {
                     MyTextEvent event = (MyTextEvent) o;
-                    number = event.number;
+                    number = event.getNumber();
                     outputDec.addMyTextEvent(event);
                 } else {
                     System.out.println("Unreadable object received");

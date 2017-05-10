@@ -3,7 +3,7 @@ package handin.text_events;
 import java.io.Serializable;
 
 public abstract class MyTextEvent implements Serializable {
-    public int number;
+    private int number;
     private int offset;
 
     MyTextEvent(int offset) {
@@ -19,4 +19,12 @@ public abstract class MyTextEvent implements Serializable {
     }
 
     public abstract int getLength();
+
+    public int getNumber() {
+        return number;
+    }
+
+    public void setNumber(int number) {
+        this.number = number;
+    }
 }

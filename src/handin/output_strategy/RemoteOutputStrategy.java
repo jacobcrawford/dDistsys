@@ -31,10 +31,10 @@ public class RemoteOutputStrategy implements OutputStrategy {
     public void output(MyTextEvent event) {
         try {
             if (socket.isConnected()) {
-                event.number = ClientHandler.number;
+                event.setNumber(ClientHandler.number);
                 //TODO find better way to track number
 
-                System.out.println("sending event! with number: " + event.number);
+                System.out.println("sending event! with number: " + event.getNumber());
                 try {
                     Thread.sleep(Settings.arbitraryDelay);
                 } catch (InterruptedException e) {

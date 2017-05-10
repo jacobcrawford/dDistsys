@@ -40,15 +40,15 @@ public class OutputHandler {
                     try {
                         event = eventQueue.take();
 
-                        System.out.println("received event with last change number: " + event.number + ", last change had number: " + number);
-                        if (event.number < number && Settings.offsetAdjusting) {
+                        System.out.println("received event with last change number: " + event.getNumber() + ", last change had number: " + number);
+                        if (event.getNumber() < number && Settings.offsetAdjusting) {
                             System.out.println("adjusting!");
                             adjustOffset(event);
                         }
                         number++;
-                        event.number = number;
+                        event.setNumber(number);
                         //remember past events
-                        pastTextEvents.put(event.number, event);
+                        pastTextEvents.put(event.getNumber(), event);
                         //TODO remove old events
                         //System.out.println("event received!");
                     } catch (InterruptedException e) {
@@ -66,7 +66,7 @@ public class OutputHandler {
      * @param newEvent, the event, that is about to be inserted
      */
     private void adjustOffset(MyTextEvent newEvent) {
-        for (int i = newEvent.number; i <= number; i++) {
+        for (int i = newEvent.getNumber(); i <= number; i++) {
             MyTextEvent textEvent = pastTextEvents.get(i);
 
             //if the previous event changes overlaps or is before this event, adjust offset.
