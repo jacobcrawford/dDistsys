@@ -128,6 +128,10 @@ public class DistributedTextEditor extends JFrame implements Editor {
         String visited = "true";
         posFile = Paths.get(".pos");
 
+        if (arg.length > 0) {
+            Settings.arbitraryDelay = Integer.parseInt(arg[0]);
+        }
+
         int x;
 
         if (!posFile.toFile().exists() || !Files.readAllLines(posFile).get(0).equals(visited)) {

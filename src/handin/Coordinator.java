@@ -5,7 +5,6 @@ import handin.text_events.MyTextEvent;
 import handin.text_events.TextInsertEvent;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -42,7 +41,10 @@ public class Coordinator {
                     System.out.println("new client connected");
                     // Add the outputstream to the handler
                     ObjectOutputStream outputStream = new ObjectOutputStream((socket.getOutputStream()));
-                    outputStream.writeObject(new TextInsertEvent(0,textArea.getText()));
+                    //set the new clients textarea to match:
+                    MyTextEvent initialEvent = new TextInsertEvent(0, textArea.getText());
+                    initialEvent.number = outputHandler.getNumber();
+                    outputStream.writeObject(initialEvent);
                     outputHandler.addClient(outputStream);
 
                     // Create an inputhandler, connect it to the outputhandler, and start its thread

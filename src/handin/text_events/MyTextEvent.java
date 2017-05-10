@@ -2,7 +2,8 @@ package handin.text_events;
 
 import java.io.Serializable;
 
-public class MyTextEvent implements Serializable {
+public abstract class MyTextEvent implements Serializable {
+    public int number;
     private int offset;
 
     MyTextEvent(int offset) {
@@ -16,4 +17,6 @@ public class MyTextEvent implements Serializable {
     public void setOffset(int offset) {
         this.offset = offset;
     }
+
+    public abstract int getLength();
 }

@@ -9,6 +9,7 @@ public class TextRemoveEvent extends MyTextEvent {
         this.length = length;
     }
 
+    @Override
     public int getLength() {
         return length;
     }

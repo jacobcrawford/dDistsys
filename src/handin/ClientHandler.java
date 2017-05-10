@@ -12,6 +12,7 @@ import java.net.SocketException;
 
 public class ClientHandler {
 
+    public static int number = 0;
     private Socket socket;
 
     public String start(String ip, int port,Editor editor) {
@@ -62,6 +63,7 @@ public class ClientHandler {
                 Object o = fromClient.readObject();
                 if (o instanceof MyTextEvent) {
                     MyTextEvent event = (MyTextEvent) o;
+                    number = event.number;
                     outputDec.addMyTextEvent(event);
                 } else {
                     System.out.println("Unreadable object received");
