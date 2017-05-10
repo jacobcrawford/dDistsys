@@ -84,19 +84,39 @@ public class OutputHandler {
                         if (newEventOffset >= oldEventOffset) {
                             newEvent.setOffset(newEventOffset + oldEvent.getLength());
                         } else {
+//                            // Delete from oldEventOffset to the newEventOffset
+//                            int lengthBeforeInsertion = oldEventOffset - newEventOffset;
+//                            int offsetBeforeInsertion = oldEventOffset;
+//                            // Also delete from the end of the insertion to the rest
+//                            int lengthAfterInsertion = newEvent.getLength() - lengthBeforeInsertion;
+//                            int offsetAfterInsertion = offsetBeforeInsertion + lengthBeforeInsertion + oldEvent.getLength();
+//
+//                            TextRemoveEvent extraEvent = new TextRemoveEvent(offsetAfterInsertion, lengthAfterInsertion);
+//                            extraEvent.setNumber(i);
+//                            eventQueue.add(extraEvent);
+//
+//                            System.out.println("OldEventOffset: " + offsetBeforeInsertion);
+//                            newEvent.setOffset(offsetBeforeInsertion);
+//                            newEvent.setLength(lengthBeforeInsertion);
+
+
                             // oldEvent = insert(bc)
                             // newEvent = delete(abcd)
 
                             // oldEventOffset > newEventOffset
                             // slet fra newEventOffset til oldEventOffset (længde X)
                             // og slet fra oldEventOffset + length(oldEvent) til length(newEvent)-X
-                            int extraEventOffSet = oldEventOffset + oldEvent.getLength();
+                            int extraEventOffSet = oldEventOffset + oldEvent.getLength() - (oldEventOffset - newEventOffset);
                             int extraEventLength = newEvent.getLength() - (oldEventOffset - newEventOffset);
                             TextRemoveEvent extraEvent = new TextRemoveEvent(extraEventOffSet, extraEventLength);
+                            extraEvent.setNumber(i);
                             eventQueue.add(extraEvent);
 
                             newEvent.setOffset(newEventOffset);
                             newEvent.setLength(oldEventOffset - newEventOffset);
+
+                            System.out.println("New event removing " + newEvent.getLength() + " from " + newEvent.getOffset());
+                            System.out.println("Extra event removing " + extraEvent.getLength() + " from " + extraEvent.getOffset());
                         }
                     } else {
                         newEvent.setOffset(newEventOffset + oldEvent.getLength());
