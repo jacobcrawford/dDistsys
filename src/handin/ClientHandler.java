@@ -1,6 +1,7 @@
 package handin;
 
 import handin.communication.Client;
+import handin.communication.Server;
 import handin.output_strategy.FilterIgnoringOutputStrategy;
 import handin.output_strategy.OutputStrategy;
 import handin.output_strategy.RemoteOutputStrategy;
@@ -10,11 +11,12 @@ import javax.swing.*;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 
 public class ClientHandler {
-
+    private LeaderToken leaderToken;
     private int number = 0;
     private Socket socket;
     private Thread localReplayThread = new Thread();
@@ -28,6 +30,7 @@ public class ClientHandler {
     }
 
     public String start(String ip, int port, Editor editor, DocumentEventCapturer dec, JTextArea area) {
+
         Client client = new Client(port);
         socket = client.connectToServer(ip);
         System.out.println("connection");
@@ -38,7 +41,25 @@ public class ClientHandler {
         editor.goOnline();
         //sets the EventReplayer to listening mode
         updateLocalReplayer(dec, new FilterIgnoringOutputStrategy(area, this));
+        new Thread(() -> {
+            //Listen for Token getters.
+            Socket tokenSocket;
+            Server server = new Server(8080);
+            if (!server.registerOnPort()) {
+                editor.setEditorTitle("Could not use port 8080, not listening for other clients...");
+            }
+            while (socket.isConnected()) {
+                tokenSocket = server.waitForConnectionFromClient();
+                try {
+                    ObjectOutputStream tokenSender = new ObjectOutputStream(tokenSocket.getOutputStream());
+                    System.out.println("TOKEN:" + leaderToken);
+                    tokenSender.writeObject(getLeaderToken());
 
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
         new Thread(() -> {
             sendAndReceiveEvents(socket, editor);
             editor.goOffline();
@@ -110,4 +131,11 @@ public class ClientHandler {
         localReplayThread.start();
     }
 
+    public LeaderToken getLeaderToken() {
+        return leaderToken;
+    }
+
+    public void setLeaderToken(LeaderToken leaderToken) {
+        this.leaderToken = leaderToken;
+    }
 }

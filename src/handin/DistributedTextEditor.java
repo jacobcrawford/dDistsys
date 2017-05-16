@@ -1,5 +1,6 @@
 package handin;
 
+import handin.communication.Client;
 import handin.communication.Server;
 import handin.sequencer.Sequencer;
 
@@ -11,6 +12,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -205,6 +208,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
                 //start local "client"
                 clientHandler = new ClientHandler();
+                clientHandler.setLeaderToken(new LeaderToken(server.getLocalHostAddress(), getPortNumber()));
                 System.out.println(clientHandler.start("localhost", getPortNumber(), (Editor) me, outputDec, textArea));
 
             }
@@ -213,11 +217,34 @@ public class DistributedTextEditor extends JFrame implements Editor {
         connect = new AbstractAction("connect") {
             @Override
             public void actionPerformed(ActionEvent e) {
+                //Get the leadertoken
+                setTitle("Connection...");
+                LeaderToken token = getToken(getIP(), getPortNumber());
                 clientHandler = new ClientHandler();
-                setTitle(clientHandler.start(getIP(), getPortNumber(), (Editor) me, outputDec, textArea));
+                clientHandler.setLeaderToken(token);
+                clientHandler.start(token.getIp(), token.getPort(), (Editor) me, outputDec, textArea);
+                setTitle("Connected to " + token.getIp() + " at port " + token.getPort());
             }
         };
     }
+
+    private LeaderToken getToken(String ip, int port) {
+        try {
+            Client client = new Client(port);
+            Socket tokenSocket = client.connectToServer(ip);
+            ObjectInputStream tokenGetter = new ObjectInputStream(tokenSocket.getInputStream());
+            LeaderToken leaderToken = (LeaderToken) tokenGetter.readObject();
+            System.out.println(leaderToken.toString());
+            return leaderToken;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
     @Override
     public DocumentEventCapturer getOutDec() {
@@ -306,4 +333,8 @@ public class DistributedTextEditor extends JFrame implements Editor {
         }
     }
 
+    @Override
+    public void setEditorTitle(String s) {
+        setTitle(s);
+    }
 }

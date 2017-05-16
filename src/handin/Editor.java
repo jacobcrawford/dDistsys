@@ -9,5 +9,7 @@ public interface Editor {
 
     DocumentEventCapturer getInDec();
 
+    void setEditorTitle(String s);
+
     void emptyTextAreas();
 }
