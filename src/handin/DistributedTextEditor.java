@@ -208,8 +208,9 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
                 //start local "client"
                 clientHandler = new ClientHandler();
+                //8080 is the current port of the leader client.
                 clientHandler.setLeaderToken(new LeaderToken(server.getLocalHostAddress(), getPortNumber()));
-                System.out.println(clientHandler.start("localhost", getPortNumber(), (Editor) me, outputDec, textArea));
+                System.out.println(clientHandler.start("localhost", getPortNumber(), (Editor) me, outputDec, textArea, 8080));
 
             }
         };
@@ -222,19 +223,23 @@ public class DistributedTextEditor extends JFrame implements Editor {
                 LeaderToken token = getToken(getIP(), getPortNumber());
                 clientHandler = new ClientHandler();
                 clientHandler.setLeaderToken(token);
-                clientHandler.start(token.getIp(), token.getPort(), (Editor) me, outputDec, textArea);
+                clientHandler.start(token.getIp(), token.getPort(), (Editor) me, outputDec, textArea, getPortNumber());
                 setTitle("Connected to " + token.getIp() + " at port " + token.getPort());
             }
         };
     }
 
+    /**
+     * @param ip   The ip of a client where the token is requested.
+     * @param port The port of the client
+     * @return The LeaderToken holding the information on the sequencer.
+     */
     private LeaderToken getToken(String ip, int port) {
         try {
             Client client = new Client(port);
             Socket tokenSocket = client.connectToServer(ip);
             ObjectInputStream tokenGetter = new ObjectInputStream(tokenSocket.getInputStream());
             LeaderToken leaderToken = (LeaderToken) tokenGetter.readObject();
-            System.out.println(leaderToken.toString());
             return leaderToken;
 
         } catch (IOException e) {
@@ -331,10 +336,5 @@ public class DistributedTextEditor extends JFrame implements Editor {
             save.setEnabled(false);
         } catch (IOException ignored) {
         }
-    }
-
-    @Override
-    public void setEditorTitle(String s) {
-        setTitle(s);
     }
 }

@@ -2,6 +2,9 @@ package handin;
 
 import java.io.Serializable;
 
+/**
+ * The LeaderToken is a token specifying the sequencer of a network of distributedTextEditors
+ */
 public class LeaderToken implements Serializable {
     private String ip;
     private int port;

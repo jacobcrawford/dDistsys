@@ -29,10 +29,10 @@ public class ClientHandler {
         return number;
     }
 
-    public String start(String ip, int port, Editor editor, DocumentEventCapturer dec, JTextArea area) {
+    public String start(String serverIp, int serverPort, Editor editor, DocumentEventCapturer dec, JTextArea area, int listenPort) {
 
-        Client client = new Client(port);
-        socket = client.connectToServer(ip);
+        Client client = new Client(serverPort);
+        socket = client.connectToServer(serverIp);
         System.out.println("connection");
         if (socket == null) {
             return "connection failed - Disconnected";
@@ -44,15 +44,16 @@ public class ClientHandler {
         new Thread(() -> {
             //Listen for Token getters.
             Socket tokenSocket;
-            Server server = new Server(8080);
-            if (!server.registerOnPort()) {
-                editor.setEditorTitle("Could not use port 8080, not listening for other clients...");
+            Server server = new Server(listenPort);
+            int counter = 1;
+            while (!server.registerOnPort()) {
+                server = new Server(listenPort + counter);
+                counter++;
             }
             while (socket.isConnected()) {
                 tokenSocket = server.waitForConnectionFromClient();
                 try {
                     ObjectOutputStream tokenSender = new ObjectOutputStream(tokenSocket.getOutputStream());
-                    System.out.println("TOKEN:" + leaderToken);
                     tokenSender.writeObject(getLeaderToken());
 
                 } catch (IOException e) {
@@ -64,7 +65,7 @@ public class ClientHandler {
             sendAndReceiveEvents(socket, editor);
             editor.goOffline();
         }).start();
-        return "Connected to " + ip + " on port " + port;
+        return "Connected to " + serverPort + " on port " + serverPort;
     }
 
     public void stop() {
