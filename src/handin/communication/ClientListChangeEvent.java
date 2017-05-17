@@ -1,10 +1,9 @@
 package handin.communication;
 
-public enum ClientListChangeEvent implements Event {
-    REMOVE, ADD;
-
+public class ClientListChangeEvent implements Event {
     private String ip;
     private int port;
+    private String event;
 
     public String getIp() {
         return ip;
@@ -20,5 +19,13 @@ public enum ClientListChangeEvent implements Event {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public String getEvent() {
+        return event;
+    }
+
+    public void setEvent(String event) {
+        this.event = event;
     }
 }
