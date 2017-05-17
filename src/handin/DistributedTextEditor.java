@@ -29,7 +29,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
     private final JTextArea textArea;
     private final JTextField ipAddress;
-    private final JTextField portNumber;
     private final JTextField errorField;
     private final JFileChooser dialog;
     private String currentFile = "Untitled";
@@ -67,8 +66,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
         ipAddress = new JTextField("localhost");
         content.add(ipAddress, BorderLayout.CENTER);
-        portNumber = new JTextField("40499");
-        content.add(portNumber, BorderLayout.CENTER);
         errorField = new JTextField("No errors");
         errorField.setEnabled(false);
         content.add(errorField, BorderLayout.CENTER);
@@ -312,7 +309,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
 
     public int getPortNumber() {
-        return Integer.parseInt(portNumber.getText());
+        return 40010;
     }
 
     private String getIP() {
@@ -382,10 +379,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
     public DocumentEventCapturer getOutputDec() {
         return outputDec;
-    }
-
-    public JTextField getPortField() {
-        return portNumber;
     }
 
     public Sequencer getSequencer() {
