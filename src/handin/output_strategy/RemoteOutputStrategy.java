@@ -32,7 +32,7 @@ public class RemoteOutputStrategy implements OutputStrategy {
         if (socket.isConnected()) {
             event.setNumber(clientHandler.getNumber());
 
-            System.out.println("sending event! with number: " + event.getNumber());
+            //System.out.println("sending event! with number: " + event.getNumber());
             try {
                 out.writeObject(event);
             } catch (IOException e) {

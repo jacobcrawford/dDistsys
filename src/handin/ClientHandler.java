@@ -30,7 +30,6 @@ public class ClientHandler {
     }
 
     public String start(String serverIp, int serverPort, Editor editor, DocumentEventCapturer dec, JTextArea area, int listenPort) {
-
         Client client = new Client(serverPort);
         socket = client.connectToServer(serverIp);
         System.out.println("connection");
@@ -42,14 +41,15 @@ public class ClientHandler {
         //sets the EventReplayer to listening mode
         updateLocalReplayer(dec, new FilterIgnoringOutputStrategy(area, this));
         new Thread(() -> {
+            int counter = 1;
             //Listen for Token getters.
             Socket tokenSocket;
             Server server = new Server(listenPort);
-            int counter = 1;
             while (!server.registerOnPort()) {
                 server = new Server(listenPort + counter);
                 counter++;
             }
+            editor.DisplayError("Listening on port: " + (listenPort + counter - 1));
             while (socket.isConnected()) {
                 tokenSocket = server.waitForConnectionFromClient();
                 try {
@@ -65,7 +65,7 @@ public class ClientHandler {
             sendAndReceiveEvents(socket, editor);
             editor.goOffline();
         }).start();
-        return "Connected to " + serverPort + " on port " + serverPort;
+        return "Connected to " + serverIp + " on port " + serverPort;
     }
 
     public void stop() {

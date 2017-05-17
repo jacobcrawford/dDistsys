@@ -40,16 +40,12 @@ public class OutputHandler {
             while (!Thread.interrupted()) {
                 try {
                     event = eventQueue.take();
-
-                    System.out.println("received event with last change number: " + event.getNumber() + ", last change had number: " + number);
                     if (event.getNumber() < number) {
-                        System.out.println("adjusting!");
                         adjustOffset(event);
                     }
                     number++;
                     event.setNumber(number);
                     //remember past events
-                    System.out.println("saving: " + event + " as number " + event.getNumber());
                     pastTextEvents.put(event.getNumber(), event);
 
                     //TODO remove old events
@@ -68,11 +64,8 @@ public class OutputHandler {
      * @param newEvent, the event, that is about to be inserted
      */
     private void adjustOffset(MyTextEvent newEvent) {
-        System.out.println("start: " + newEvent);
         for (int i = newEvent.getNumber() + 1; i <= number; i++) {
             MyTextEvent oldEvent = pastTextEvents.get(i);
-            System.out.println(i + ": " + oldEvent);
-
             int newEventOffset = newEvent.getOffset();
             int newEventEndPoint = newEvent.getOffset() + newEvent.getLength();
             int oldEventOffset = oldEvent.getOffset();
@@ -93,9 +86,6 @@ public class OutputHandler {
 
                             newEvent.setOffset(newEventOffset);
                             newEvent.setLength(oldEventOffset - newEventOffset);
-
-                            System.out.println("New event removing " + newEvent.getLength() + " from " + newEvent.getOffset());
-                            System.out.println("Extra event removing " + extraEvent.getLength() + " from " + extraEvent.getOffset());
                         }
                     } else {
                         newEvent.setOffset(newEventOffset + oldEvent.getLength());
@@ -119,9 +109,6 @@ public class OutputHandler {
                                 TextRemoveEvent extraEvent = new TextRemoveEvent(extraEventOffSet, extraEventLength);
                                 extraEvent.setNumber(i);
                                 eventQueue.add(extraEvent);
-
-                                System.out.println("New event removing " + newEvent.getLength() + " from " + newEvent.getOffset());
-                                System.out.println("Extra event removing " + extraEvent.getLength() + " from " + extraEvent.getOffset());
                             }
                         }
                     } else {
@@ -135,12 +122,10 @@ public class OutputHandler {
                 newEvent.setLength(0);
             }
         }
-        System.out.println("end: " + newEvent);
     }
 
     private void broadcast(MyTextEvent event) {
         //
-        System.out.println("BroadCast!");
         for (Iterator<ObjectOutputStream> iterator = outputStreams.iterator(); iterator.hasNext(); ) {
             ObjectOutputStream outputStream = iterator.next();
             try {

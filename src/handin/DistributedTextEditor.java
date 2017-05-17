@@ -30,6 +30,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private final JTextArea textArea;
     private final JTextField ipAddress;
     private final JTextField portNumber;
+    private final JTextField errorField;
     private final JFileChooser dialog;
     private String currentFile = "Untitled";
     private Server server;
@@ -47,9 +48,10 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private final DocumentEventCapturer inputDec = new DocumentEventCapturer();
     private final DocumentEventCapturer outputDec = new DocumentEventCapturer();
 
-    private DistributedTextEditor(int x) {
+    public DistributedTextEditor(int x) {
 
         textArea = new JTextArea(12, 70);
+
         textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
 
         initializeActions();
@@ -67,6 +69,9 @@ public class DistributedTextEditor extends JFrame implements Editor {
         content.add(ipAddress, BorderLayout.CENTER);
         portNumber = new JTextField("40499");
         content.add(portNumber, BorderLayout.CENTER);
+        errorField = new JTextField("No errors");
+        errorField.setEnabled(false);
+        content.add(errorField, BorderLayout.CENTER);
 
         JMenuBar JMB = new JMenuBar();
         setJMenuBar(JMB);
@@ -306,7 +311,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
     }
 
 
-    private int getPortNumber() {
+    public int getPortNumber() {
         return Integer.parseInt(portNumber.getText());
     }
 
@@ -337,4 +342,55 @@ public class DistributedTextEditor extends JFrame implements Editor {
         } catch (IOException ignored) {
         }
     }
+
+    @Override
+    public void DisplayError(String s) {
+        errorField.setText(s);
+    }
+
+    public Action getListen() {
+        return listen;
+    }
+
+    public Action getConnect() {
+        return connect;
+    }
+
+    public JTextArea getTextArea() {
+        return textArea;
+    }
+
+    public JTextField getIpAddress() {
+        return ipAddress;
+    }
+
+    public JTextField getErrorField() {
+        return errorField;
+    }
+
+    public Server getServer() {
+        return server;
+    }
+
+    public ClientHandler getClientHandler() {
+        return clientHandler;
+    }
+
+    public DocumentEventCapturer getInputDec() {
+        return inputDec;
+    }
+
+    public DocumentEventCapturer getOutputDec() {
+        return outputDec;
+    }
+
+    public JTextField getPortField() {
+        return portNumber;
+    }
+
+    public Sequencer getSequencer() {
+        return sequencer;
+    }
+
+
 }

@@ -63,4 +63,8 @@ public class Sequencer {
         outputHandler.stop();
         listenThread.interrupt();
     }
+
+    public LinkedBlockingDeque<MyTextEvent> getEventQueue() {
+        return eventQueue;
+    }
 }

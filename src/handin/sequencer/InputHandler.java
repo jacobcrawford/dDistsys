@@ -25,7 +25,6 @@ public class InputHandler implements Runnable {
         try {
             while (running) {
                 MyTextEvent event = (MyTextEvent) stream.readObject();
-                System.out.println("event received!");
                 eventQueue.add(event);
             }
         } catch (EOFException e) {
