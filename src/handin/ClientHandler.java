@@ -21,12 +21,12 @@ public class ClientHandler {
     private Socket socket;
     private Thread localReplayThread = new Thread();
 
-    public void setNumber(int number) {
-        this.number = number;
-    }
-
     public int getNumber() {
         return number;
+    }
+
+    public void setNumber(int number) {
+        this.number = number;
     }
 
     public String start(String serverIp, int serverPort, Editor editor, DocumentEventCapturer dec, JTextArea area, int listenPort) {
@@ -49,6 +49,7 @@ public class ClientHandler {
                 server = new Server(listenPort + counter);
                 counter++;
             }
+
             editor.DisplayError("Listening on port: " + (listenPort + counter - 1));
             while (socket.isConnected()) {
                 tokenSocket = server.waitForConnectionFromClient();

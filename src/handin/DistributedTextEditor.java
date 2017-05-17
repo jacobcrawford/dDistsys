@@ -21,16 +21,20 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
+import static handin.Configuration.portRange;
+import static handin.Configuration.serverPort;
+
 public class DistributedTextEditor extends JFrame implements Editor {
 
     private static final int SECOND_WINDOW_POSITION = 700;
     private static Path posFile;
-    private boolean changed = false;
-
     private final JTextArea textArea;
     private final JTextField ipAddress;
     private final JTextField errorField;
     private final JFileChooser dialog;
+    private final DocumentEventCapturer inputDec = new DocumentEventCapturer();
+    private final DocumentEventCapturer outputDec = new DocumentEventCapturer();
+    private boolean changed = false;
     private String currentFile = "Untitled";
     private Server server;
     private Action disconnect;
@@ -43,9 +47,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private Action quit;
     private ClientHandler clientHandler;
     private Sequencer sequencer;
-
-    private final DocumentEventCapturer inputDec = new DocumentEventCapturer();
-    private final DocumentEventCapturer outputDec = new DocumentEventCapturer();
+    private int clientPortNumber = -1;
 
     public DistributedTextEditor(int x) {
 
@@ -192,7 +194,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
         JFrame me = this;
         listen = new AbstractAction("listen") {
             public void actionPerformed(ActionEvent e) {
-                server = new Server(getPortNumber());
+                server = new Server(getServerPortNumber());
                 if (!server.registerOnPort()) {
                     JOptionPane.showMessageDialog(me,
                             "Could not start listening. Port already in use.",
@@ -201,7 +203,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
                             new ImageIcon("res/trollface.png"));
                     return;
                 }
-                setTitle("I'm listening on " + server.getLocalHostAddress() + " on port " + getPortNumber());
+                setTitle("I'm listening on " + server.getLocalHostAddress() + " on port " + getServerPortNumber());
 
                 goOnline();
 
@@ -210,10 +212,9 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
                 //start local "client"
                 clientHandler = new ClientHandler();
-                //8080 is the current port of the leader client.
-                clientHandler.setLeaderToken(new LeaderToken(server.getLocalHostAddress(), getPortNumber()));
-                System.out.println(clientHandler.start("localhost", getPortNumber(), (Editor) me, outputDec, textArea, 8080));
 
+                clientHandler.setLeaderToken(new LeaderToken(server.getLocalHostAddress(), getServerPortNumber()));
+                System.out.println(clientHandler.start("localhost", getServerPortNumber(), (Editor) me, outputDec, textArea, portRange[0]));
             }
         };
 
@@ -222,32 +223,38 @@ public class DistributedTextEditor extends JFrame implements Editor {
             public void actionPerformed(ActionEvent e) {
                 //Get the leadertoken
                 setTitle("Connection...");
-                LeaderToken token = getToken(getIP(), getPortNumber());
+                LeaderToken token = getToken(getIP());
                 clientHandler = new ClientHandler();
                 clientHandler.setLeaderToken(token);
-                clientHandler.start(token.getIp(), token.getPort(), (Editor) me, outputDec, textArea, getPortNumber());
+                clientHandler.start(token.getIp(), token.getPort(), (Editor) me, outputDec, textArea, portRange[0]);
                 setTitle("Connected to " + token.getIp() + " at port " + token.getPort());
             }
         };
     }
 
     /**
-     * @param ip   The ip of a client where the token is requested.
-     * @param port The port of the client
-     * @return The LeaderToken holding the information on the sequencer.
+     * Retreives the {@link LeaderToken} from the client located at the specified ip.
+     *
+     * @param hostname The hostname of a client where the token is requested.
+     * @return The {@link LeaderToken} holding the information on the sequencer
+     * or null, if no such {@link LeaderToken} is found
      */
-    private LeaderToken getToken(String ip, int port) {
-        try {
-            Client client = new Client(port);
-            Socket tokenSocket = client.connectToServer(ip);
-            ObjectInputStream tokenGetter = new ObjectInputStream(tokenSocket.getInputStream());
-            LeaderToken leaderToken = (LeaderToken) tokenGetter.readObject();
-            return leaderToken;
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+    private LeaderToken getToken(String hostname) {
+        for (int port = portRange[0]; port <= portRange[1]; port++) {
+            System.out.println("Trying " + port);
+            try {
+                Client client = new Client(port);
+                Socket tokenSocket = client.connectToServer(hostname);
+                if (tokenSocket != null) {
+                    ObjectInputStream tokenGetter = new ObjectInputStream(tokenSocket.getInputStream());
+                    Object receivedObject = tokenGetter.readObject();
+                    if (receivedObject instanceof LeaderToken) {
+                        return (LeaderToken) receivedObject;
+                    }
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                // Something went wrong receiving or reading the object, so search on another port
+            }
         }
         return null;
     }
@@ -307,9 +314,8 @@ public class DistributedTextEditor extends JFrame implements Editor {
         document.setDocumentFilter(filter);
     }
 
-
-    public int getPortNumber() {
-        return 40010;
+    private int getServerPortNumber() {
+        return serverPort;
     }
 
     private String getIP() {
@@ -381,9 +387,8 @@ public class DistributedTextEditor extends JFrame implements Editor {
         return outputDec;
     }
 
+
     public Sequencer getSequencer() {
         return sequencer;
     }
-
-
 }
