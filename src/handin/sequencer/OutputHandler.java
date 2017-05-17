@@ -1,5 +1,6 @@
 package handin.sequencer;
 
+import handin.communication.ClientListChangeEvent;
 import handin.communication.Event;
 import handin.text_events.MyTextEvent;
 import handin.text_events.TextInsertEvent;
@@ -7,7 +8,6 @@ import handin.text_events.TextRemoveEvent;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.net.SocketException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -20,7 +20,7 @@ public class OutputHandler {
     //to remember past events.
     private final HashMap<Integer, MyTextEvent> pastTextEvents;
     private final BlockingQueue<Event> eventQueue;
-    private final List<ObjectOutputStream> outputStreams;
+    private final List<ClientBundle> outputStreams;
     private int number = 0;
     private Thread broadcastThread;
 
@@ -31,8 +31,11 @@ public class OutputHandler {
         this.pastTextEvents.put(0, new TextInsertEvent(0, ""));
     }
 
-    public void addClient(ObjectOutputStream newStream) {
-        outputStreams.add(newStream);
+    public void addClient(ObjectOutputStream newStream, String ip, int port) {
+        outputStreams.add(new ClientBundle(port,ip,newStream));
+        //Add that a new client has joined the list.
+        Event event = new ClientListChangeEvent(ip,port,ClientListChangeEvent.add);
+        eventQueue.add(event);
     }
 
     public void beginBroadcasting() {
@@ -130,24 +133,30 @@ public class OutputHandler {
 
     private void broadcast(Event event) {
         //
-        for (Iterator<ObjectOutputStream> iterator = outputStreams.iterator(); iterator.hasNext(); ) {
-            ObjectOutputStream outputStream = iterator.next();
+        for (Iterator<ClientBundle> iterator = outputStreams.iterator(); iterator.hasNext(); ) {
+            ClientBundle client = iterator.next();
             try {
-                outputStream.writeObject(event);
+                client.getStream().writeObject(event);
             } catch (SocketException e) {
                 System.out.println("Dead OutputStream removed from OutputHandler");
                 iterator.remove();
+                removeClient(client);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
+    private void removeClient(ClientBundle client) {
+        Event event = new ClientListChangeEvent(client.getIp(),client.getPort(),ClientListChangeEvent.remove);
+        eventQueue.add(event);
+    }
+
     public void stop() {
         broadcastThread.interrupt();
-        for (OutputStream out : outputStreams) {
+        for (ClientBundle client: outputStreams) {
             try {
-                out.close();
+                client.getStream().close();
             } catch (IOException e) {
                 System.out.println("Closing connection to client");
                 e.printStackTrace();

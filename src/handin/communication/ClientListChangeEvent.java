@@ -1,9 +1,20 @@
 package handin.communication;
 
-public class ClientListChangeEvent implements Event {
+import java.io.Serializable;
+
+public class ClientListChangeEvent implements Event, Serializable {
     private String ip;
     private int port;
     private String event;
+
+    public static String remove = "REMOVE";
+    public static String add = "ADD";
+
+    public ClientListChangeEvent(String ip, int port, String event) {
+        this.ip = ip;
+        this.port = port;
+        this.event = event;
+    }
 
     public String getIp() {
         return ip;

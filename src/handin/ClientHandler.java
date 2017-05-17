@@ -7,7 +7,6 @@ import handin.output_strategy.FilterIgnoringOutputStrategy;
 import handin.output_strategy.OutputStrategy;
 import handin.output_strategy.RemoteOutputStrategy;
 import handin.text_events.MyTextEvent;
-import javafx.util.Pair;
 
 import javax.swing.*;
 import java.io.EOFException;
@@ -23,7 +22,7 @@ public class ClientHandler {
     private int number = 0;
     private Socket socket;
     private Thread localReplayThread = new Thread();
-    private LinkedList<Pair<String, Integer>> clientList;
+    private final LinkedList<Pair<String, Integer>> clientList = new LinkedList<>();
 
     public String start(String serverIp, int serverPort, Editor editor, DocumentEventCapturer dec, JTextArea area, int listenPort) {
         Client client = new Client(serverPort);
@@ -102,8 +101,10 @@ public class ClientHandler {
                     Pair client = new Pair<>(e.getIp(), e.getPort());
                     if (e.getEvent().equals("ADD")) {
                         clientList.add(client);
+                        System.out.println("added");
                     } else if (e.getEvent().equals("REMOVE")) {
                         clientList.remove(client);
+                        System.out.println("removed");
                     } else {
                     System.out.println("Unreadable object received");
                 }
