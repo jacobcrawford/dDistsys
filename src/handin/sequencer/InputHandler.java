@@ -1,5 +1,6 @@
 package handin.sequencer;
 
+import handin.communication.Event;
 import handin.text_events.MyTextEvent;
 
 import java.io.EOFException;
@@ -10,10 +11,10 @@ import java.util.Queue;
 public class InputHandler implements Runnable {
 
     private final ObjectInputStream stream;
-    private final Queue<MyTextEvent> eventQueue;
+    private final Queue<Event> eventQueue;
     private final Boolean running;
 
-    public InputHandler(ObjectInputStream stream, Queue<MyTextEvent> eventQueue) {
+    public InputHandler(ObjectInputStream stream, Queue<Event> eventQueue) {
         running = true;
         this.stream = stream;
         this.eventQueue = eventQueue;

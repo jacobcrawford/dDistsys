@@ -1,8 +1,10 @@
 package handin.text_events;
 
+import handin.communication.Event;
+
 import java.io.Serializable;
 
-public abstract class MyTextEvent implements Serializable {
+public abstract class MyTextEvent implements Serializable, Event {
     private int number;
     private int offset;
 

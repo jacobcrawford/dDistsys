@@ -1,5 +1,6 @@
 package handin.sequencer;
 
+import handin.communication.Event;
 import handin.text_events.MyTextEvent;
 import handin.text_events.TextInsertEvent;
 import handin.text_events.TextRemoveEvent;
@@ -18,12 +19,12 @@ public class OutputHandler {
 
     //to remember past events.
     private final HashMap<Integer, MyTextEvent> pastTextEvents;
-    private final BlockingQueue<MyTextEvent> eventQueue;
+    private final BlockingQueue<Event> eventQueue;
     private final List<ObjectOutputStream> outputStreams;
     private int number = 0;
     private Thread broadcastThread;
 
-    public OutputHandler(BlockingQueue<MyTextEvent> eventQueue) {
+    public OutputHandler(BlockingQueue<Event> eventQueue) {
         this.outputStreams = new LinkedList<>();
         this.eventQueue = eventQueue;
         this.pastTextEvents = new HashMap<>();
@@ -36,17 +37,20 @@ public class OutputHandler {
 
     public void beginBroadcasting() {
         broadcastThread = new Thread(() -> {
-            MyTextEvent event = null;
+            Event event = null;
             while (!Thread.interrupted()) {
                 try {
                     event = eventQueue.take();
-                    if (event.getNumber() < number) {
-                        adjustOffset(event);
+                    if (event instanceof MyTextEvent) {
+                        MyTextEvent textEvent = (MyTextEvent) event;
+                        if (textEvent.getNumber() < number) {
+                            adjustOffset(textEvent);
+                        }
+                        number++;
+                        textEvent.setNumber(number);
+                        //remember past events
+                        pastTextEvents.put(textEvent.getNumber(), textEvent);
                     }
-                    number++;
-                    event.setNumber(number);
-                    //remember past events
-                    pastTextEvents.put(event.getNumber(), event);
 
                     //TODO remove old events
                 } catch (InterruptedException e) {
@@ -124,7 +128,7 @@ public class OutputHandler {
         }
     }
 
-    private void broadcast(MyTextEvent event) {
+    private void broadcast(Event event) {
         //
         for (Iterator<ObjectOutputStream> iterator = outputStreams.iterator(); iterator.hasNext(); ) {
             ObjectOutputStream outputStream = iterator.next();

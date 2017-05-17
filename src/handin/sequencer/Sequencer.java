@@ -1,5 +1,6 @@
 package handin.sequencer;
 
+import handin.communication.Event;
 import handin.communication.Server;
 import handin.text_events.MyTextEvent;
 import handin.text_events.TextInsertEvent;
@@ -12,7 +13,7 @@ import java.net.Socket;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class Sequencer {
-    private final LinkedBlockingDeque<MyTextEvent> eventQueue;
+    private final LinkedBlockingDeque<Event> eventQueue;
     private final OutputHandler outputHandler;
     private Thread listenThread;
     private final Server server;
@@ -64,7 +65,7 @@ public class Sequencer {
         listenThread.interrupt();
     }
 
-    public LinkedBlockingDeque<MyTextEvent> getEventQueue() {
+    public LinkedBlockingDeque<Event> getEventQueue() {
         return eventQueue;
     }
 }
