@@ -1,11 +1,13 @@
 package handin;
 
 import handin.communication.Client;
+import handin.communication.ClientListChangeEvent;
 import handin.communication.Server;
 import handin.output_strategy.FilterIgnoringOutputStrategy;
 import handin.output_strategy.OutputStrategy;
 import handin.output_strategy.RemoteOutputStrategy;
 import handin.text_events.MyTextEvent;
+import javafx.util.Pair;
 
 import javax.swing.*;
 import java.io.EOFException;
@@ -14,20 +16,14 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.LinkedList;
 
 public class ClientHandler {
     private LeaderToken leaderToken;
     private int number = 0;
     private Socket socket;
     private Thread localReplayThread = new Thread();
-
-    public int getNumber() {
-        return number;
-    }
-
-    public void setNumber(int number) {
-        this.number = number;
-    }
+    private LinkedList<Pair<String, Integer>> clientList;
 
     public String start(String serverIp, int serverPort, Editor editor, DocumentEventCapturer dec, JTextArea area, int listenPort) {
         Client client = new Client(serverPort);
@@ -95,17 +91,25 @@ public class ClientHandler {
 
         // Send textevents from the input stream to the outputDec
         try {
-            final ObjectInputStream fromClient = new ObjectInputStream(socket.getInputStream());
+            final ObjectInputStream fromSequencer = new ObjectInputStream(socket.getInputStream());
             while (socket.isConnected() && !socket.isClosed()) {
-                Object o = fromClient.readObject();
+                Object o = fromSequencer.readObject();
                 if (o instanceof MyTextEvent) {
                     MyTextEvent event = (MyTextEvent) o;
                     outputDec.addMyTextEvent(event);
-                } else {
+                } else if (o instanceof ClientListChangeEvent) {
+                    ClientListChangeEvent e = (ClientListChangeEvent) o;
+                    Pair client = new Pair<>(e.getIp(), e.getPort());
+                    if (e.getEvent().equals("ADD")) {
+                        clientList.add(client);
+                    } else if (e.getEvent().equals("REMOVE")) {
+                        clientList.remove(client);
+                    } else {
                     System.out.println("Unreadable object received");
                 }
+                }
             }
-            fromClient.close();
+            fromSequencer.close();
 
         } catch (SocketException | EOFException s) {
             // SocketException is thrown when you disconnect
@@ -139,5 +143,13 @@ public class ClientHandler {
 
     public void setLeaderToken(LeaderToken leaderToken) {
         this.leaderToken = leaderToken;
+    }
+
+    public void setNumber(int number) {
+        this.number = number;
+    }
+
+    public int getNumber() {
+        return number;
     }
 }
