@@ -159,7 +159,7 @@ public class ClientHandler {
                     switch (e.getEvent()) {
                         case "ADD":
                             clientList.add(client);
-                            System.out.println("added");
+                            System.out.println("added "+client.getFirst()+ " "+ client.getSecond());
                             break;
                         case "REMOVE":
                             clientList.remove(client);

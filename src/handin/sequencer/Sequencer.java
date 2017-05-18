@@ -52,9 +52,15 @@ public class Sequencer {
                     initialEvent.setNumber(outputHandler.getNumber());
                     outputStream.writeObject(initialEvent);
                     ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-                    //TODO fix port numbers, so that the port is 10k++
+
+
                     Pair<String,Integer> clientInfo =(handin.Pair) inputStream.readObject();
                     pushClientListOnNewClient(outputStream);
+                    //Add client after the push so that it is not added twice
+                    clientList.add(clientInfo);
+                    //Add the ADDEvent to the queue
+                    Event event = new ClientListChangeEvent(clientInfo.getFirst(),clientInfo.getSecond(),ClientListChangeEvent.add);
+                    eventQueue.add(event);
                     outputHandler.addClient(outputStream);
 
                     // Create an inputhandler, connect it to the outputhandler, and start its thread
