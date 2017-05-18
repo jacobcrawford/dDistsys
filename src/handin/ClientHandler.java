@@ -23,7 +23,7 @@ public class ClientHandler {
     private int number = 0;
     private Socket socket;
     private Thread localReplayThread = new Thread();
-    private Integer actualListenPort;
+    private TokenThreadHandler tokenThreadHandler;
 
     public String start(String serverIp, int serverPort, Editor editor, DocumentEventCapturer dec, JTextArea area, int listenPort) {
         Client client = new Client(serverPort);
@@ -35,30 +35,10 @@ public class ClientHandler {
 
         editor.goOnline();
         //sets the EventReplayer to listening mode
+        tokenThreadHandler = new TokenThreadHandler(listenPort,editor,socket,getLeaderToken());
+
         updateLocalReplayer(dec, new FilterIgnoringOutputStrategy(area, this));
-        new Thread(() -> {
-            int counter = 1;
-            //Listen for Token getters.
-            Socket tokenSocket;
-            Server server = new Server(listenPort);
-            while (!server.registerOnPort()) {
-                server = new Server(listenPort + counter);
-                counter++;
-            }
-            actualListenPort = listenPort + counter - 1;
-
-            editor.DisplayError("Listening on port: " + (listenPort + counter - 1));
-            while (socket.isConnected()) {
-                tokenSocket = server.waitForConnectionFromClient();
-                try {
-                    ObjectOutputStream tokenSender = new ObjectOutputStream(tokenSocket.getOutputStream());
-                    tokenSender.writeObject(getLeaderToken());
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        new Thread(tokenThreadHandler).start();
         // TODO: Handle interruption of this thread
         Thread communicationThread = new Thread(() -> {
             while (!Thread.interrupted()) {
@@ -93,7 +73,7 @@ public class ClientHandler {
     }
 
     private LeaderToken receiveNewLeaderToken() {
-        return null;
+        return tokenThreadHandler.getNewToken();
     }
 
     private Socket getSocketFromToken(LeaderToken leaderToken) {
@@ -102,7 +82,7 @@ public class ClientHandler {
 
     private boolean isFirstInList() {
         // TODO: Implement correctly
-        return clientList.getLast().equals(new Pair<>(socket.getLocalAddress().getHostAddress(), actualListenPort));
+        return clientList.getLast().equals(new Pair<>(socket.getLocalAddress().getHostAddress(), getListenPort()));
     }
 
     public void stop() {
@@ -205,6 +185,6 @@ public class ClientHandler {
     }
 
     public Integer getListenPort() {
-        return actualListenPort;
+        return tokenThreadHandler.getListenPort();
     }
 }
