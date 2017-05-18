@@ -1,5 +1,6 @@
 package handin.sequencer;
 
+import handin.communication.ClientListChangeEvent;
 import handin.communication.Event;
 import handin.text_events.MyTextEvent;
 
@@ -13,11 +14,19 @@ public class InputHandler implements Runnable {
     private final ObjectInputStream stream;
     private final Queue<Event> eventQueue;
     private final Boolean running;
+    private String ip;
+    private int port;
 
-    public InputHandler(ObjectInputStream stream, Queue<Event> eventQueue) {
+    public InputHandler(ObjectInputStream stream, Queue<Event> eventQueue, String ip, int port) {
+        this.ip = ip;
+        this.port = port;
         running = true;
         this.stream = stream;
         this.eventQueue = eventQueue;
+
+        //Add the event that a new client has joined the list.
+        Event event = new ClientListChangeEvent(ip,port,ClientListChangeEvent.add);
+        eventQueue.add(event);
     }
 
     @Override
@@ -28,10 +37,10 @@ public class InputHandler implements Runnable {
                 MyTextEvent event = (MyTextEvent) stream.readObject();
                 eventQueue.add(event);
             }
-        } catch (EOFException e) {
-            System.out.println("InputHandler going down");
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("InputHandler going down");
         }
+        //Add the event that a new client has joined the list.
+        eventQueue.add(new ClientListChangeEvent(ip,port,ClientListChangeEvent.remove));
     }
 }

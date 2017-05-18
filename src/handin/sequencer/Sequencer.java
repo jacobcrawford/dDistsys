@@ -46,11 +46,11 @@ public class Sequencer {
                     MyTextEvent initialEvent = new TextInsertEvent(0, textArea.getText());
                     initialEvent.setNumber(outputHandler.getNumber());
                     outputStream.writeObject(initialEvent);
-                    outputHandler.addClient(outputStream,socket.getInetAddress().getHostAddress(),socket.getPort());
+                    outputHandler.addClient(outputStream);
 
                     // Create an inputhandler, connect it to the outputhandler, and start its thread
                     ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-                    InputHandler inputHandler = new InputHandler(inputStream, eventQueue);
+                    InputHandler inputHandler = new InputHandler(inputStream, eventQueue,socket.getInetAddress().getHostAddress(),socket.getPort());
                     new Thread(inputHandler).start();
                 } catch (IOException ex) {
                     ex.printStackTrace();
