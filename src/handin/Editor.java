@@ -1,5 +1,7 @@
 package handin;
 
+import handin.communication.Server;
+
 public interface Editor {
     void goOffline();
 
@@ -14,4 +16,6 @@ public interface Editor {
     void emptyTextAreas();
 
     void setTitle(String newTitle);
+
+    void startSequencer(Server server);
 }

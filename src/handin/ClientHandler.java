@@ -6,6 +6,7 @@ import handin.communication.Server;
 import handin.output_strategy.FilterIgnoringOutputStrategy;
 import handin.output_strategy.OutputStrategy;
 import handin.output_strategy.RemoteOutputStrategy;
+import handin.sequencer.Sequencer;
 import handin.text_events.MyTextEvent;
 
 import javax.swing.*;
@@ -48,6 +49,7 @@ public class ClientHandler {
             while (!Thread.interrupted()) {
                 sendAndReceiveEvents(socket, editor);
                 socket = handleServerCrash();
+                System.out.println(socket);
             }
             editor.goOffline();
         });
@@ -62,12 +64,14 @@ public class ClientHandler {
      * @return A {@link Socket} to the new sequencer
      */
     private Socket handleServerCrash() {
+        tokenThreadHandler.setLeaderToken(null);
         // Start sequencer if current client is the first in the client list
         if (isFirstInList()) new Thread(this::startSequencer).start();
 
         // Block until the newLeaderToken is received
         LeaderToken leaderToken = receiveNewLeaderToken();
 
+        System.out.println(leaderToken);
         // Return the socket opened using the leaderToken
         return getSocketFromToken(leaderToken);
     }
@@ -76,12 +80,14 @@ public class ClientHandler {
      * Starts a sequencer
      */
     private void startSequencer() {
-
+        System.out.println("im the new sequencer");
         // Start the new server, register it on the port and update the local title
         Server server = new Server(serverPort);
         server.registerOnPort();
         String hostAddress = server.getLocalHostAddress();
         editor.setTitle("I'm listening on " + hostAddress + " on port " + serverPort);
+
+        editor.startSequencer(server);
 
         // Send out a new leader token to everyone on the client list (including yourself)
         for (Pair<String, Integer> client : clientList) {
@@ -110,7 +116,17 @@ public class ClientHandler {
     }
 
     private LeaderToken receiveNewLeaderToken() {
-        return tokenThreadHandler.getNewToken();
+        LeaderToken result = null;
+        while (result==null) {
+            result = tokenThreadHandler.getLeaderToken();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("ready to receive!!");
+        }
+        return result;
     }
 
     private Socket getSocketFromToken(LeaderToken leaderToken) {
@@ -120,6 +136,10 @@ public class ClientHandler {
 
     private boolean isFirstInList() {
         // TODO: Implement correctly
+
+        System.out.println(clientList.getLast());
+        System.out.println(new Pair<>(socket.getLocalAddress().getHostAddress(), getListenPort()));
+
         return clientList.getLast().equals(new Pair<>(socket.getLocalAddress().getHostAddress(), getListenPort()));
     }
 

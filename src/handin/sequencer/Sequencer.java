@@ -64,7 +64,7 @@ public class Sequencer {
                     outputHandler.addClient(outputStream);
 
                     // Create an inputhandler, connect it to the outputhandler, and start its thread
-                    InputHandler inputHandler = new InputHandler(inputStream, eventQueue,socket.getInetAddress().getHostAddress(),clientInfo.getSecond());
+                    InputHandler inputHandler = new InputHandler(inputStream, eventQueue,clientInfo);
                     new Thread(inputHandler).start();
                 } catch (IOException ex) {
                     ex.printStackTrace();

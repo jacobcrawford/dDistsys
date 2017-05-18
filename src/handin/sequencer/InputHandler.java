@@ -1,5 +1,6 @@
 package handin.sequencer;
 
+import handin.Pair;
 import handin.communication.ClientListChangeEvent;
 import handin.communication.Event;
 import handin.text_events.MyTextEvent;
@@ -16,9 +17,9 @@ public class InputHandler implements Runnable {
     private String ip;
     private int port;
 
-    public InputHandler(ObjectInputStream stream, Queue<Event> eventQueue, String ip, int port) {
-        this.ip = ip;
-        this.port = port;
+    public InputHandler(ObjectInputStream stream, Queue<Event> eventQueue, Pair<String,Integer> clientInfo) {
+        this.ip = clientInfo.getFirst();
+        this.port = clientInfo.getSecond();
         running = true;
         this.stream = stream;
         this.eventQueue = eventQueue;

@@ -238,9 +238,8 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private LeaderToken getToken(String hostname) {
         for (int port = portRange[0]; port <= portRange[1]; port++) {
             System.out.println("Trying " + port);
-            try {
-                Client client = new Client(port);
-                Socket tokenSocket = client.connectToServer(hostname);
+            Client client = new Client(port);
+            try (Socket tokenSocket = client.connectToServer(hostname)){
                 if (tokenSocket != null) {
                     ObjectInputStream tokenGetter = new ObjectInputStream(tokenSocket.getInputStream());
                     Object receivedObject = tokenGetter.readObject();
@@ -308,6 +307,12 @@ public class DistributedTextEditor extends JFrame implements Editor {
         document.setDocumentFilter(null);
         textArea.setText("");
         document.setDocumentFilter(filter);
+    }
+
+    @Override
+    public void startSequencer(Server server) {
+        Sequencer sequencer = new Sequencer(server,textArea);
+        sequencer.start();
     }
 
     private int getServerPortNumber() {
