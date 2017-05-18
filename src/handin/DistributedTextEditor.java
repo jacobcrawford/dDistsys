@@ -36,7 +36,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private final DocumentEventCapturer outputDec = new DocumentEventCapturer();
     private boolean changed = false;
     private String currentFile = "Untitled";
-    private Server server;
     private Action disconnect;
     private Action copy;
     private Action paste;
@@ -161,8 +160,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
             public void actionPerformed(ActionEvent e) {
 
                 // Resets the listening connection
-
-                if (server != null) server.deregisterOnPort();
                 if (sequencer != null) sequencer.stop();
                 clientHandler.stop();
             }
@@ -194,7 +191,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
         JFrame me = this;
         listen = new AbstractAction("listen") {
             public void actionPerformed(ActionEvent e) {
-                server = new Server(getServerPortNumber());
+                Server server = new Server(getServerPortNumber());
                 if (!server.registerOnPort()) {
                     JOptionPane.showMessageDialog(me,
                             "Could not start listening. Port already in use.",
@@ -368,10 +365,6 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
     public JTextField getErrorField() {
         return errorField;
-    }
-
-    public Server getServer() {
-        return server;
     }
 
     public ClientHandler getClientHandler() {

@@ -19,6 +19,7 @@ public class TokenThreadHandler implements Runnable {
         this.listenPort = listenPort;
         this.editor = editor;
         this.leaderToken = leaderToken;
+        listening = true;
     }
 
     @Override
@@ -33,7 +34,7 @@ public class TokenThreadHandler implements Runnable {
 
         editor.DisplayError("Listening on port: " + (listenPort));
         while (!Thread.interrupted()) {
-            if(listening) {
+            if (listening) {
                 tokenSocket = server.waitForConnectionFromClient();
                 try {
                     ObjectOutputStream tokenSender = new ObjectOutputStream(tokenSocket.getOutputStream());
@@ -63,13 +64,12 @@ public class TokenThreadHandler implements Runnable {
     public LeaderToken getNewToken() {
         listening = false;
         LeaderToken result = null;
-        while(result==null) {
+        while (result == null) {
             Socket tokenSocket = server.waitForConnectionFromClient();
             try {
                 ObjectInputStream inputStream = new ObjectInputStream(tokenSocket.getInputStream());
                 Object input = inputStream.readObject();
-                if (input instanceof LeaderToken)
-                {
+                if (input instanceof LeaderToken) {
                     result = (LeaderToken) input;
                 }
                 inputStream.close();

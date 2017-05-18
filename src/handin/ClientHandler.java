@@ -17,16 +17,20 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.LinkedList;
 
+import static handin.Configuration.serverPort;
+
 public class ClientHandler {
     private final LinkedList<Pair<String, Integer>> clientList = new LinkedList<>();
     private LeaderToken leaderToken;
     private int number = 0;
     private Socket socket;
     private Thread localReplayThread = new Thread();
+    private Editor editor;
     private TokenThreadHandler tokenThreadHandler;
 
     public String start(String serverIp, int serverPort, Editor editor, DocumentEventCapturer dec, JTextArea area, int listenPort) {
         Client client = new Client(serverPort);
+        this.editor = editor;
         socket = client.connectToServer(serverIp);
         System.out.println("connection");
         if (socket == null) {
@@ -35,7 +39,7 @@ public class ClientHandler {
 
         editor.goOnline();
         //sets the EventReplayer to listening mode
-        tokenThreadHandler = new TokenThreadHandler(listenPort,editor,socket,getLeaderToken());
+        tokenThreadHandler = new TokenThreadHandler(listenPort, editor, socket, getLeaderToken());
 
         updateLocalReplayer(dec, new FilterIgnoringOutputStrategy(area, this));
         new Thread(tokenThreadHandler).start();
@@ -53,15 +57,18 @@ public class ClientHandler {
     }
 
     /**
+     * Handles whenever a sequencer goes down
+     *
      * @return A {@link Socket} to the new sequencer
      */
     private Socket handleServerCrash() {
         // Start sequencer if current client is the first in the client list
-        if (isFirstInList()) startSequencer();
+        if (isFirstInList()) new Thread(this::startSequencer).start();
 
         // Block until the newLeaderToken is received
         LeaderToken leaderToken = receiveNewLeaderToken();
 
+        // Return the socket opened using the leaderToken
         return getSocketFromToken(leaderToken);
     }
 
@@ -70,6 +77,34 @@ public class ClientHandler {
      */
     private void startSequencer() {
 
+        // Start the new server, register it on the port and update the local title
+        Server server = new Server(serverPort);
+        server.registerOnPort();
+        String hostAddress = server.getLocalHostAddress();
+        editor.setTitle("I'm listening on " + hostAddress + " on port " + serverPort);
+
+        // Send out a new leader token to everyone on the client list (including yourself)
+        for (Pair<String, Integer> client : clientList) {
+            LeaderToken leaderToken = new LeaderToken(hostAddress, serverPort);
+            send(leaderToken, client);
+            System.out.println("Sent new leader token " + leaderToken);
+        }
+    }
+
+    private void send(LeaderToken leaderToken, Pair<String, Integer> receiverInfo) {
+        Client client = new Client(receiverInfo.getSecond());
+        Socket socket;
+
+        while ((socket = client.connectToServer(receiverInfo.getFirst())) == null) try {
+            Thread.sleep(10);
+        } catch (InterruptedException ignored) {
+        }
+
+        try (ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream())) {
+            outputStream.writeObject(leaderToken);
+        } catch (IOException e) {
+            System.out.println("Error writing to client " + receiverInfo.getFirst() + ":" + receiverInfo.getSecond());
+        }
     }
 
     private LeaderToken receiveNewLeaderToken() {
@@ -77,7 +112,8 @@ public class ClientHandler {
     }
 
     private Socket getSocketFromToken(LeaderToken leaderToken) {
-        return null;
+        Client client = new Client(leaderToken.getPort());
+        return client.connectToServer(leaderToken.getIp());
     }
 
     private boolean isFirstInList() {

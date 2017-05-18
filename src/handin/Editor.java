@@ -12,4 +12,6 @@ public interface Editor {
     void DisplayError(String s);
 
     void emptyTextAreas();
+
+    void setTitle(String newTitle);
 }

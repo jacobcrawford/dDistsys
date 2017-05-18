@@ -18,10 +18,10 @@ import java.util.concurrent.LinkedBlockingDeque;
 public class Sequencer {
     private final LinkedBlockingDeque<Event> eventQueue;
     private final OutputHandler outputHandler;
-    private Thread listenThread;
     private final Server server;
     private final JTextArea textArea;
     private final LinkedList<handin.Pair<String, Integer>> clientList;
+    private Thread listenThread;
 
     public Sequencer(Server server, JTextArea textArea) {
         this.textArea = textArea;
@@ -84,6 +84,7 @@ public class Sequencer {
 
     public void stop() {
         outputHandler.stop();
+        server.deregisterOnPort();
         listenThread.interrupt();
     }
 
