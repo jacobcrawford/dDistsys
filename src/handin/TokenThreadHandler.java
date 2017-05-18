@@ -14,12 +14,12 @@ public class TokenThreadHandler implements Runnable {
     private Object leaderToken;
     private boolean listening;
     private Server server;
+    private LeaderToken result;
 
     public TokenThreadHandler(int listenPort, Editor editor, Socket socket, Object leaderToken) {
         this.listenPort = listenPort;
         this.editor = editor;
         this.leaderToken = leaderToken;
-        listening = true;
     }
 
     @Override
@@ -34,8 +34,8 @@ public class TokenThreadHandler implements Runnable {
 
         editor.DisplayError("Listening on port: " + (listenPort));
         while (!Thread.interrupted()) {
-            if (listening) {
-                tokenSocket = server.waitForConnectionFromClient();
+            tokenSocket = server.waitForConnectionFromClient();
+            if(listening) {
                 try {
                     ObjectOutputStream tokenSender = new ObjectOutputStream(tokenSocket.getOutputStream());
                     tokenSender.writeObject(getLeaderToken());
@@ -44,11 +44,18 @@ public class TokenThreadHandler implements Runnable {
                     e.printStackTrace();
                 }
             } else {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                    try {
+                        ObjectInputStream inputStream = new ObjectInputStream(tokenSocket.getInputStream());
+                        Object input = inputStream.readObject();
+                        if (input instanceof LeaderToken)
+                        {
+                            result = (LeaderToken) input;
+                        }
+                        inputStream.close();
+                        tokenSocket.close();
+                    } catch (IOException | ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
             }
         }
     }
@@ -63,18 +70,11 @@ public class TokenThreadHandler implements Runnable {
 
     public LeaderToken getNewToken() {
         listening = false;
-        LeaderToken result = null;
-        while (result == null) {
-            Socket tokenSocket = server.waitForConnectionFromClient();
+        result = null;
+        while(result==null) {
             try {
-                ObjectInputStream inputStream = new ObjectInputStream(tokenSocket.getInputStream());
-                Object input = inputStream.readObject();
-                if (input instanceof LeaderToken) {
-                    result = (LeaderToken) input;
-                }
-                inputStream.close();
-                tokenSocket.close();
-            } catch (IOException | ClassNotFoundException e) {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
