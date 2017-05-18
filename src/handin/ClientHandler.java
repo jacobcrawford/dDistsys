@@ -18,11 +18,11 @@ import java.net.SocketException;
 import java.util.LinkedList;
 
 public class ClientHandler {
+    private final LinkedList<Pair<String, Integer>> clientList = new LinkedList<>();
     private LeaderToken leaderToken;
     private int number = 0;
     private Socket socket;
     private Thread localReplayThread = new Thread();
-    private final LinkedList<Pair<String, Integer>> clientList = new LinkedList<>();
     private Integer actualListenPort;
 
     public String start(String serverIp, int serverPort, Editor editor, DocumentEventCapturer dec, JTextArea area, int listenPort) {
@@ -59,11 +59,50 @@ public class ClientHandler {
                 }
             }
         }).start();
-        new Thread(() -> {
-            sendAndReceiveEvents(socket, editor);
+        // TODO: Handle interruption of this thread
+        Thread communicationThread = new Thread(() -> {
+            while (!Thread.interrupted()) {
+                sendAndReceiveEvents(socket, editor);
+                socket = handleServerCrash();
+            }
             editor.goOffline();
-        }).start();
+        });
+        communicationThread.start();
+
         return "Connected to " + serverIp + " on port " + serverPort;
+    }
+
+    /**
+     * @return A {@link Socket} to the new sequencer
+     */
+    private Socket handleServerCrash() {
+        // Start sequencer if current client is the first in the client list
+        if (isFirstInList()) startSequencer();
+
+        // Block until the newLeaderToken is received
+        LeaderToken leaderToken = receiveNewLeaderToken();
+
+        return getSocketFromToken(leaderToken);
+    }
+
+    /**
+     * Starts a sequencer
+     */
+    private void startSequencer() {
+
+    }
+
+    private LeaderToken receiveNewLeaderToken() {
+        return null;
+    }
+
+    private Socket getSocketFromToken(LeaderToken leaderToken) {
+        return null;
+    }
+
+    private boolean isFirstInList() {
+        // TODO: Implement correctly
+        return clientList.getLast().equals(new Pair<>(socket.getLocalAddress().getHostAddress(), actualListenPort));
     }
 
     public void stop() {
@@ -101,14 +140,17 @@ public class ClientHandler {
                 } else if (o instanceof ClientListChangeEvent) {
                     ClientListChangeEvent e = (ClientListChangeEvent) o;
                     Pair<String, Integer> client = new Pair<>(e.getIp(), e.getPort());
-                    if (e.getEvent().equals("ADD")) {
-                        clientList.add(client);
-                        System.out.println("added");
-                    } else if (e.getEvent().equals("REMOVE")) {
-                        clientList.remove(client);
-                        System.out.println("removed");
-                    } else {
-                        System.out.println("Bad ClientListChangeEvent received");
+                    switch (e.getEvent()) {
+                        case "ADD":
+                            clientList.add(client);
+                            System.out.println("added");
+                            break;
+                        case "REMOVE":
+                            clientList.remove(client);
+                            System.out.println("removed");
+                            break;
+                        default:
+                            System.out.println("Bad ClientListChangeEvent received");
                     }
                 } else {
                     System.out.println("Unreadable object received");
@@ -120,9 +162,8 @@ public class ClientHandler {
         } catch (SocketException | EOFException s) {
             // SocketException is thrown when you disconnect
             // EOFException is thrown when the other disconnects
-            //s.printStackTrace();
-            System.out.println("Socket/EOF-Exception cast in ClientHandler");
-            editor.emptyTextAreas();
+            System.out.println("Server disconnected");
+//            editor.emptyTextAreas();
         } catch (IOException | ClassNotFoundException ex) {
             ex.printStackTrace();
         }
@@ -143,7 +184,7 @@ public class ClientHandler {
         localReplayThread.start();
     }
 
-    public LeaderToken getLeaderToken() {
+    private LeaderToken getLeaderToken() {
         return leaderToken;
     }
 
@@ -151,12 +192,12 @@ public class ClientHandler {
         this.leaderToken = leaderToken;
     }
 
-    public void setNumber(int number) {
-        this.number = number;
-    }
-
     public int getNumber() {
         return number;
+    }
+
+    public void setNumber(int number) {
+        this.number = number;
     }
 
     public LinkedList<Pair<String, Integer>> getClientList() {
