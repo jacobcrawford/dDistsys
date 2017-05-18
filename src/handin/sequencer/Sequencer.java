@@ -1,5 +1,6 @@
 package handin.sequencer;
 
+import handin.Pair;
 import handin.communication.ClientListChangeEvent;
 import handin.communication.Event;
 import handin.communication.Server;
@@ -53,14 +54,13 @@ public class Sequencer {
                     outputHandler.addClient(outputStream);
                     ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
                     //TODO fix port numbers, so that the port is 10k++
-                    clientList.add((handin.Pair) inputStream.readObject());
+                    Pair<String,Integer> clientInfo =(handin.Pair) inputStream.readObject();
+                    clientList.add(clientInfo);
                     pushClientListOnNewClient(outputStream);
-                    outputHandler.addClient(outputStream,socket.getInetAddress().getHostAddress(),socket.getPort());
+                    outputHandler.addClient(outputStream);
 
                     // Create an inputhandler, connect it to the outputhandler, and start its thread
-                    ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-                    InputHandler inputHandler = new InputHandler(inputStream, eventQueue,socket.getInetAddress().getHostAddress(),socket.getPort());
-                    InputHandler inputHandler = new InputHandler(inputStream, eventQueue);
+                    InputHandler inputHandler = new InputHandler(inputStream, eventQueue,socket.getInetAddress().getHostAddress(),clientInfo.getSecond());
                     new Thread(inputHandler).start();
                 } catch (IOException ex) {
                     ex.printStackTrace();
