@@ -11,22 +11,22 @@ public class TokenThreadHandler implements Runnable {
 
     private int listenPort;
     private Editor editor;
-    private Object leaderToken;
-    private boolean listening;
-    private Server server;
+    private LeaderToken leaderToken;
+    private boolean broadcastMode;
     private LeaderToken result;
 
-    public TokenThreadHandler(int listenPort, Editor editor, Socket socket, Object leaderToken) {
+    public TokenThreadHandler(int listenPort, Editor editor, LeaderToken leaderToken) {
         this.listenPort = listenPort;
         this.editor = editor;
         this.leaderToken = leaderToken;
+        broadcastMode = true;
     }
 
     @Override
     public void run() {
         //Listen for Token getters.
         Socket tokenSocket;
-        server = new Server(listenPort);
+        Server server = new Server(listenPort);
         while (!server.registerOnPort()) {
             server = new Server(listenPort);
             listenPort++;
@@ -35,7 +35,7 @@ public class TokenThreadHandler implements Runnable {
         editor.DisplayError("Listening on port: " + (listenPort));
         while (!Thread.interrupted()) {
             tokenSocket = server.waitForConnectionFromClient();
-            if(listening) {
+            if (broadcastMode) {
                 try {
                     ObjectOutputStream tokenSender = new ObjectOutputStream(tokenSocket.getOutputStream());
                     tokenSender.writeObject(getLeaderToken());
@@ -44,23 +44,22 @@ public class TokenThreadHandler implements Runnable {
                     e.printStackTrace();
                 }
             } else {
-                    try {
-                        ObjectInputStream inputStream = new ObjectInputStream(tokenSocket.getInputStream());
-                        Object input = inputStream.readObject();
-                        if (input instanceof LeaderToken)
-                        {
-                            result = (LeaderToken) input;
-                        }
-                        inputStream.close();
-                        tokenSocket.close();
-                    } catch (IOException | ClassNotFoundException e) {
-                        e.printStackTrace();
+                try {
+                    ObjectInputStream inputStream = new ObjectInputStream(tokenSocket.getInputStream());
+                    Object input = inputStream.readObject();
+                    if (input instanceof LeaderToken) {
+                        result = (LeaderToken) input;
                     }
+                    inputStream.close();
+                    tokenSocket.close();
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
 
-    public Object getLeaderToken() {
+    private LeaderToken getLeaderToken() {
         return leaderToken;
     }
 
@@ -69,16 +68,17 @@ public class TokenThreadHandler implements Runnable {
     }
 
     public LeaderToken getNewToken() {
-        listening = false;
+        System.out.println("I'm now ready to receive");
+        broadcastMode = false;
         result = null;
-        while(result==null) {
+        while (result == null) {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        listening = true;
+        broadcastMode = true;
         return result;
     }
 }

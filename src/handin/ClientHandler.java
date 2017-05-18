@@ -39,7 +39,7 @@ public class ClientHandler {
 
         editor.goOnline();
         //sets the EventReplayer to listening mode
-        tokenThreadHandler = new TokenThreadHandler(listenPort, editor, socket, getLeaderToken());
+        tokenThreadHandler = new TokenThreadHandler(listenPort, editor, getLeaderToken());
 
         updateLocalReplayer(dec, new FilterIgnoringOutputStrategy(area, this));
         new Thread(tokenThreadHandler).start();
@@ -85,6 +85,7 @@ public class ClientHandler {
 
         // Send out a new leader token to everyone on the client list (including yourself)
         for (Pair<String, Integer> client : clientList) {
+            System.out.println("Sending new leader token to " + client);
             LeaderToken leaderToken = new LeaderToken(hostAddress, serverPort);
             send(leaderToken, client);
             System.out.println("Sent new leader token " + leaderToken);
@@ -95,9 +96,10 @@ public class ClientHandler {
         Client client = new Client(receiverInfo.getSecond());
         Socket socket;
 
-        while ((socket = client.connectToServer(receiverInfo.getFirst())) == null) try {
-            Thread.sleep(10);
-        } catch (InterruptedException ignored) {
+        socket = client.connectToServer(receiverInfo.getFirst());
+        if (socket == null) {
+            System.out.println("Error sending new leader token to client " + receiverInfo + " failed");
+            return;
         }
 
         try (ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream())) {
