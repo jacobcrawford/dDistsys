@@ -3,7 +3,6 @@ package handin.sequencer;
 import handin.communication.Event;
 import handin.text_events.MyTextEvent;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Queue;
@@ -28,10 +27,8 @@ public class InputHandler implements Runnable {
                 MyTextEvent event = (MyTextEvent) stream.readObject();
                 eventQueue.add(event);
             }
-        } catch (EOFException e) {
-            System.out.println("InputHandler going down");
         } catch (IOException | ClassNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("InputHandler going down");
         }
     }
 }

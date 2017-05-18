@@ -206,14 +206,13 @@ public class DistributedTextEditor extends JFrame implements Editor {
                 setTitle("I'm listening on " + server.getLocalHostAddress() + " on port " + getServerPortNumber());
 
                 goOnline();
-
-                sequencer = new Sequencer(server, textArea);
-                sequencer.start();
-
                 //start local "client"
                 clientHandler = new ClientHandler();
 
                 clientHandler.setLeaderToken(new LeaderToken(server.getLocalHostAddress(), getServerPortNumber()));
+                sequencer = new Sequencer(server, textArea);
+                sequencer.start();
+
                 System.out.println(clientHandler.start("localhost", getServerPortNumber(), (Editor) me, outputDec, textArea, portRange[0]));
             }
         };

@@ -23,6 +23,7 @@ public class ClientHandler {
     private Socket socket;
     private Thread localReplayThread = new Thread();
     private final LinkedList<Pair<String, Integer>> clientList = new LinkedList<>();
+    private Integer actualListenPort;
 
     public String start(String serverIp, int serverPort, Editor editor, DocumentEventCapturer dec, JTextArea area, int listenPort) {
         Client client = new Client(serverPort);
@@ -44,6 +45,7 @@ public class ClientHandler {
                 server = new Server(listenPort + counter);
                 counter++;
             }
+            actualListenPort = listenPort + counter - 1;
 
             editor.DisplayError("Listening on port: " + (listenPort + counter - 1));
             while (socket.isConnected()) {
@@ -98,7 +100,7 @@ public class ClientHandler {
                     outputDec.addMyTextEvent(event);
                 } else if (o instanceof ClientListChangeEvent) {
                     ClientListChangeEvent e = (ClientListChangeEvent) o;
-                    Pair client = new Pair<>(e.getIp(), e.getPort());
+                    Pair<String, Integer> client = new Pair<>(e.getIp(), e.getPort());
                     if (e.getEvent().equals("ADD")) {
                         clientList.add(client);
                         System.out.println("added");
@@ -106,9 +108,12 @@ public class ClientHandler {
                         clientList.remove(client);
                         System.out.println("removed");
                     } else {
+                        System.out.println("Bad ClientListChangeEvent received");
+                    }
+                } else {
                     System.out.println("Unreadable object received");
                 }
-                }
+
             }
             fromSequencer.close();
 
@@ -152,5 +157,13 @@ public class ClientHandler {
 
     public int getNumber() {
         return number;
+    }
+
+    public LinkedList<Pair<String, Integer>> getClientList() {
+        return clientList;
+    }
+
+    public Integer getListenPort() {
+        return actualListenPort;
     }
 }

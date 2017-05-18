@@ -1,6 +1,7 @@
 package handin.output_strategy;
 
 import handin.ClientHandler;
+import handin.Pair;
 import handin.text_events.MyTextEvent;
 
 import java.io.IOException;
@@ -16,6 +17,13 @@ public class RemoteOutputStrategy implements OutputStrategy {
         this.socket = socket;
         this.clientHandler = clientHandler;
         out = createOutputStream();
+        try {
+            //Write client info to the sequencer
+            out.writeObject(new Pair<String, Integer>(socket.getInetAddress().getHostAddress(), clientHandler.getListenPort()));
+            System.out.println(clientHandler.getListenPort());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private ObjectOutputStream createOutputStream() {
