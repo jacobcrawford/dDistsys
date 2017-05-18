@@ -39,7 +39,6 @@ public class RemoteOutputStrategy implements OutputStrategy {
     public void output(MyTextEvent event) {
         if (socket.isConnected()) {
             event.setNumber(clientHandler.getNumber());
-
             //System.out.println("sending event! with number: " + event.getNumber());
             try {
                 out.writeObject(event);

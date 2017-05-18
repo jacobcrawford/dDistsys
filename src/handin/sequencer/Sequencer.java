@@ -51,11 +51,9 @@ public class Sequencer {
                     MyTextEvent initialEvent = new TextInsertEvent(0, textArea.getText());
                     initialEvent.setNumber(outputHandler.getNumber());
                     outputStream.writeObject(initialEvent);
-                    outputHandler.addClient(outputStream);
                     ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
                     //TODO fix port numbers, so that the port is 10k++
                     Pair<String,Integer> clientInfo =(handin.Pair) inputStream.readObject();
-                    clientList.add(clientInfo);
                     pushClientListOnNewClient(outputStream);
                     outputHandler.addClient(outputStream);
 
