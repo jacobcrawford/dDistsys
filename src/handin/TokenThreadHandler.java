@@ -11,17 +11,16 @@ public class TokenThreadHandler implements Runnable {
 
     private int listenPort;
     private Editor editor;
-
-    public void setLeaderToken(LeaderToken leaderToken) {
-        this.leaderToken = leaderToken;
-    }
-
     private LeaderToken leaderToken;
 
     public TokenThreadHandler(int listenPort, Editor editor, LeaderToken leaderToken) {
         this.listenPort = listenPort;
         this.editor = editor;
         this.leaderToken = leaderToken;
+    }
+
+    public void resetLeaderToken() {
+        this.leaderToken = null;
     }
 
     @Override
@@ -50,7 +49,7 @@ public class TokenThreadHandler implements Runnable {
                     }
                     tokenSocket.close();
                 } catch (IOException | ClassNotFoundException e) {
-                    System.out.println("TokenThread " +Thread.currentThread().getName() + "Unexpected closure");
+                    System.out.println("Leader Token exchange socket hard closed");
                 }
         }
     }

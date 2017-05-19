@@ -17,5 +17,7 @@ public interface Editor {
 
     void setTitle(String newTitle);
 
-    void startSequencer(Server server);
+    void startSequencer(Server server, String initialContent);
+
+    String getText();
 }

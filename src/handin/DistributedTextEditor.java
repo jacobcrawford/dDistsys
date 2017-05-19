@@ -312,9 +312,15 @@ public class DistributedTextEditor extends JFrame implements Editor {
     }
 
     @Override
-    public void startSequencer(Server server) {
+    public void startSequencer(Server server, String initialContent) {
         Sequencer sequencer = new Sequencer(server,textArea);
         sequencer.start();
+        textArea.setText(initialContent);
+    }
+
+    @Override
+    public String getText() {
+        return textArea.getText();
     }
 
     private int getServerPortNumber() {

@@ -47,7 +47,7 @@ public class ClientHandler {
         Thread communicationThread = new Thread(() -> {
             while (!Thread.interrupted()) {
                 sendAndReceiveEvents(socket, editor);
-                socket = handleServerCrash();
+                socket = handleServerCrash(editor.getText());
                 System.out.println(socket);
             }
             editor.goOffline();
@@ -61,15 +61,20 @@ public class ClientHandler {
      * Handles whenever a sequencer goes down
      *
      * @return A {@link Socket} to the new sequencer
+     * @param initialContent
      */
-    private Socket handleServerCrash() {
-        tokenThreadHandler.setLeaderToken(null);
+    private Socket handleServerCrash(String initialContent) {
+        // Remove the now invalid leader token
+        tokenThreadHandler.resetLeaderToken();
+
+
         // Start sequencer if current client is the first in the client list
-        if (isFirstInList()){
-            new Thread(this::startSequencer).start();
-        }else {
-            editor.emptyTextAreas();
+        if (isFirstInList()) {
+            new Thread(() -> startSequencer(initialContent)).start();
         }
+        editor.emptyTextAreas();
+
+
         // Block until the newLeaderToken is received
         LeaderToken leaderToken = receiveNewLeaderToken();
 
@@ -81,7 +86,7 @@ public class ClientHandler {
     /**
      * Starts a sequencer
      */
-    private void startSequencer() {
+    private void startSequencer(String initialContent) {
         System.out.println("im the new sequencer");
         // Start the new server, register it on the port and update the local title
         Server server = new Server(serverPort);
@@ -89,7 +94,7 @@ public class ClientHandler {
         String hostAddress = server.getLocalHostAddress();
         editor.setTitle("I'm listening on " + hostAddress + " on port " + serverPort);
 
-        editor.startSequencer(server);
+        editor.startSequencer(server, initialContent);
 
         // Send out a new leader token to everyone on the client list (including yourself)
         for (Pair<String, Integer> client : clientList) {
@@ -110,16 +115,22 @@ public class ClientHandler {
             return;
         }
 
-        try (ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream())) {
+        try (ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream())) {
+            // Read the leader token from client
+            inputStream.readObject();
+            // Write the new leader token to client
             outputStream.writeObject(leaderToken);
         } catch (IOException e) {
             System.out.println("Error writing to client " + receiverInfo.getFirst() + ":" + receiverInfo.getSecond());
+        } catch (ClassNotFoundException e) {
+            System.out.println("Received unreadable object from client");
         }
     }
 
     private LeaderToken receiveNewLeaderToken() {
         LeaderToken result = null;
-        while (result==null) {
+        while (result == null) {
             result = tokenThreadHandler.getLeaderToken();
             try {
                 Thread.sleep(100);
@@ -183,7 +194,7 @@ public class ClientHandler {
                     switch (e.getEvent()) {
                         case "ADD":
                             clientList.add(client);
-                            System.out.println("added "+client.getFirst()+ " "+ client.getSecond());
+                            System.out.println("added " + client.getFirst() + " " + client.getSecond());
                             break;
                         case "REMOVE":
                             clientList.remove(client);
