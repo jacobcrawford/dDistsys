@@ -6,7 +6,6 @@ import handin.communication.Server;
 import handin.output_strategy.FilterIgnoringOutputStrategy;
 import handin.output_strategy.OutputStrategy;
 import handin.output_strategy.RemoteOutputStrategy;
-import handin.sequencer.Sequencer;
 import handin.text_events.MyTextEvent;
 
 import javax.swing.*;
@@ -66,8 +65,11 @@ public class ClientHandler {
     private Socket handleServerCrash() {
         tokenThreadHandler.setLeaderToken(null);
         // Start sequencer if current client is the first in the client list
-        if (isFirstInList()) new Thread(this::startSequencer).start();
-
+        if (isFirstInList()){
+            new Thread(this::startSequencer).start();
+        }else {
+            editor.emptyTextAreas();
+        }
         // Block until the newLeaderToken is received
         LeaderToken leaderToken = receiveNewLeaderToken();
 

@@ -245,6 +245,8 @@ public class DistributedTextEditor extends JFrame implements Editor {
                     Object receivedObject = tokenGetter.readObject();
                     if (receivedObject instanceof LeaderToken) {
                         return (LeaderToken) receivedObject;
+                    }else{
+                        System.out.println("OBJECT WAS NOT A TOKEN" );
                     }
                 }
             } catch (IOException | ClassNotFoundException e) {
@@ -388,4 +390,5 @@ public class DistributedTextEditor extends JFrame implements Editor {
     public Sequencer getSequencer() {
         return sequencer;
     }
+
 }
