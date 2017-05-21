@@ -17,7 +17,6 @@ import java.util.concurrent.BlockingQueue;
 
 public class OutputHandler {
 
-    //to remember past events.
     private final HashMap<Integer, MyTextEvent> pastTextEvents;
     private final BlockingQueue<Event> eventQueue;
     private final List<ObjectOutputStream> outputStreams;
@@ -31,7 +30,7 @@ public class OutputHandler {
         this.pastTextEvents.put(0, new TextInsertEvent(0, ""));
     }
 
-    public void addClient(ObjectOutputStream newStream) {
+    public synchronized void addClient(ObjectOutputStream newStream) {
         outputStreams.add(newStream);
     }
 
@@ -138,7 +137,7 @@ public class OutputHandler {
         }
     }
 
-    private void broadcast(Event event) {
+    private synchronized void broadcast(Event event) {
         //
         for (Iterator<ObjectOutputStream> iterator = outputStreams.iterator(); iterator.hasNext(); ) {
             ObjectOutputStream stream = iterator.next();
@@ -153,7 +152,7 @@ public class OutputHandler {
         }
     }
 
-    public void stop() {
+    public synchronized void stop() {
         broadcastThread.interrupt();
         for (ObjectOutputStream stream: outputStreams) {
             try {
