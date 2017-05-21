@@ -6,16 +6,19 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.concurrent.Semaphore;
 
 public class TokenThreadHandler implements Runnable {
 
     private int listenPort = 0;
     private Editor editor;
     private LeaderToken leaderToken;
+    private Semaphore semaphore;
 
-    public TokenThreadHandler(Editor editor, LeaderToken leaderToken) {
+    public TokenThreadHandler(Editor editor, LeaderToken leaderToken, Semaphore semaphore) {
         this.editor = editor;
         this.leaderToken = leaderToken;
+        this.semaphore = semaphore;
     }
 
     public void resetLeaderToken() {
@@ -32,7 +35,10 @@ public class TokenThreadHandler implements Runnable {
             tempListenPort++;
             server = new Server(tempListenPort);
         }
+        semaphore.release();
+        System.out.println("Released");
         listenPort = tempListenPort;
+
 
         editor.DisplayError("Listening on port: " + (tempListenPort));
         while (!Thread.interrupted()) {
@@ -60,13 +66,6 @@ public class TokenThreadHandler implements Runnable {
     }
 
     public int getListenPort() {
-        while (listenPort==0) {
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
         return listenPort;
     }
 }

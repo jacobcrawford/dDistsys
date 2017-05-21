@@ -7,21 +7,26 @@ import handin.text_events.MyTextEvent;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.concurrent.Semaphore;
 
 public class RemoteOutputStrategy implements OutputStrategy {
     private final ObjectOutputStream out;
     private final Socket socket;
     private final ClientHandler clientHandler;
 
-    public RemoteOutputStrategy(Socket socket, ClientHandler clientHandler) {
+    public RemoteOutputStrategy(Socket socket, ClientHandler clientHandler, Semaphore semaphore) {
         this.socket = socket;
         this.clientHandler = clientHandler;
         out = createOutputStream();
         try {
             //Write client info to the sequencer
+            System.out.println("Acquireing");
+            semaphore.acquire();
             out.writeObject(new Pair<String, Integer>(socket.getLocalAddress().getHostAddress(), clientHandler.getListenPort()));
             System.out.println(clientHandler.getListenPort());
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }

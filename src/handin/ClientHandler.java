@@ -17,6 +17,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 
 import static handin.Configuration.serverPort;
 
@@ -28,10 +29,12 @@ public class ClientHandler {
     private Thread localReplayThread = new Thread();
     private Editor editor;
     private TokenThreadHandler tokenThreadHandler;
+    private Semaphore semaphore;
 
     public String start(String serverIp, int serverPort, Editor editor, DocumentEventCapturer dec, JTextArea area, int listenPort) {
         Client client = new Client(serverPort);
         this.editor = editor;
+        semaphore = new Semaphore(0);
         socket = client.connectToServer(serverIp);
         System.out.println("connection");
         if (socket == null) {
@@ -40,7 +43,7 @@ public class ClientHandler {
 
         editor.goOnline();
         //sets the EventReplayer to listening mode
-        tokenThreadHandler = new TokenThreadHandler(editor, getLeaderToken());
+        tokenThreadHandler = new TokenThreadHandler(editor, getLeaderToken(),semaphore);
 
         updateLocalReplayer(dec, new FilterIgnoringOutputStrategy(area, this));
         new Thread(tokenThreadHandler).start();
@@ -49,6 +52,7 @@ public class ClientHandler {
             while (!Thread.interrupted()) {
                 sendAndReceiveEvents(socket, editor);
                 socket = handleServerCrash(editor.getText());
+                editor.emptyTextAreas();
                 System.out.println(socket);
             }
             editor.goOffline();
@@ -65,10 +69,16 @@ public class ClientHandler {
      * @return A {@link Socket} to the new sequencer
      */
     private Socket handleServerCrash(String initialContent) {
+        //allow remoteOutStrategy to send port once more.
+        semaphore.release();
+        System.out.println("Print clients");
+        for (Pair p : clientList) System.out.println(p.getFirst()+" "+p.getSecond());
         // Remove the now invalid leader token
         tokenThreadHandler.resetLeaderToken();
 
-        editor.emptyTextAreas();
+
+
+
 
 
         System.out.println("Current List is: ");
@@ -79,7 +89,7 @@ public class ClientHandler {
 
 
         LeaderToken leaderToken = null;
-
+        int currentSequencerIndex = 1; // This might be zero in second round of crashing
 
         while (leaderToken == null) {
             Pair<String, Integer> elected = clientList.getLast();
@@ -99,18 +109,6 @@ public class ClientHandler {
 //            leaderToken = receiveNewLeaderToken();
 //            currentSequencerIndex++;
 //        }
-
-
-
-
-
-
-
-
-
-
-
-
 
         clientList = new LinkedList<>();
 
@@ -242,7 +240,7 @@ public class ClientHandler {
         DocumentEventCapturer outputDec = editor.getOutDec();
         // Create an event replayer that listens on inputDec and outputs to the socket
         Thread onlineReplayThread = new Thread(
-                new EventReplayer(inputDec, new RemoteOutputStrategy(socket, this))
+                new EventReplayer(inputDec, new RemoteOutputStrategy(socket, this,semaphore))
         );
         onlineReplayThread.start();
 

@@ -272,7 +272,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
      * sets the editor to online mode.
      */
     public void goOnline() {
-        saveOld();
+        //saveOld();
         textArea.setText("");
         updateConnectionMenuButtons(true);
 
