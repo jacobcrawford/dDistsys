@@ -51,6 +51,7 @@ public class Sequencer {
                     MyTextEvent initialEvent = new TextInsertEvent(0, textArea.getText());
                     initialEvent.setNumber(outputHandler.getNumber());
                     outputStream.writeObject(initialEvent);
+                    System.out.println("Wrote initial event " + textArea.getText() + " to new client");
                     ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
 
 

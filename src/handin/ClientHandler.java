@@ -17,10 +17,10 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.LinkedList;
 
-import static handin.Configuration.serverPort;
+import static handin.Configuration.*;
 
 public class ClientHandler {
-    private LinkedList<Pair<String, Integer>> clientList = new LinkedList<>();
+    private final LinkedList<Pair<String, Integer>> clientList = new LinkedList<>();
     private LeaderToken leaderToken;
     private int number = 0;
     private Socket socket;
@@ -60,26 +60,37 @@ public class ClientHandler {
     /**
      * Handles whenever a sequencer goes down
      *
+     * @param initialContent The initial content of the new sequencer
      * @return A {@link Socket} to the new sequencer
-     * @param initialContent
      */
     private Socket handleServerCrash(String initialContent) {
         // Remove the now invalid leader token
         tokenThreadHandler.resetLeaderToken();
 
-
-        // Start sequencer if current client is the first in the client list
-        if (isFirstInList()) {
-            new Thread(() -> startSequencer(initialContent)).start();
-        }
         editor.emptyTextAreas();
 
-        // Block until the newLeaderToken is received
-        LeaderToken leaderToken = receiveNewLeaderToken();
+
+        LeaderToken leaderToken = null;
+        int currentSequencerIndex = 1; // This might be zero in second round of crashing
+        while (leaderToken == null) {
+            if (weAreNewSequencer(currentSequencerIndex)) new Thread(() -> startSequencer(initialContent)).start();
+            leaderToken = receiveNewLeaderToken();
+            currentSequencerIndex++;
+        }
 
         System.out.println(leaderToken);
         // Return the socket opened using the leaderToken
         return getSocketFromToken(leaderToken);
+    }
+
+    private boolean weAreNewSequencer(int sequencerIndex) {
+        if (sequencerIndex == clientList.size()) sequencerIndex = 0;
+
+        System.out.println(clientList.get(sequencerIndex));
+        System.out.println(new Pair<>(socket.getLocalAddress().getHostAddress(), getListenPort()));
+
+        Pair me = new Pair<>(socket.getLocalAddress().getHostAddress(), getListenPort());
+        return clientList.get(sequencerIndex).equals(me);
     }
 
     /**
@@ -114,8 +125,10 @@ public class ClientHandler {
             return;
         }
 
-        try (ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
-             ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream())) {
+        try {
+            ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+            ObjectOutputStream outputStream = new ObjectOutputStream(socket.getOutputStream());
+
             // Read the leader token from client
             inputStream.readObject();
             // Write the new leader token to client
@@ -128,31 +141,24 @@ public class ClientHandler {
     }
 
     private LeaderToken receiveNewLeaderToken() {
-        LeaderToken result = null;
-        while (result == null) {
-            result = tokenThreadHandler.getLeaderToken();
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            System.out.println("ready to receive!!");
+        for (int i = 1; i < connectionAttemptsToNewSequencer; i++) {
+            LeaderToken result = tokenThreadHandler.getLeaderToken();
+            if (result != null) return result;
+            sleep(waitPerConnectionAttempt);
         }
-        return result;
+        return null;
+    }
+
+    private void sleep(int waitPerConnectionAttempt) {
+        try {
+            Thread.sleep(waitPerConnectionAttempt);
+        } catch (InterruptedException ignored) {
+        }
     }
 
     private Socket getSocketFromToken(LeaderToken leaderToken) {
         Client client = new Client(leaderToken.getPort());
         return client.connectToServer(leaderToken.getIp());
-    }
-
-    private boolean isFirstInList() {
-        // TODO: Implement correctly
-
-        System.out.println(clientList.getLast());
-        System.out.println(new Pair<>(socket.getLocalAddress().getHostAddress(), getListenPort()));
-
-        return clientList.getLast().equals(new Pair<>(socket.getLocalAddress().getHostAddress(), getListenPort()));
     }
 
     public void stop() {
@@ -248,10 +254,6 @@ public class ClientHandler {
 
     public void setNumber(int number) {
         this.number = number;
-    }
-
-    public LinkedList<Pair<String, Integer>> getClientList() {
-        return clientList;
     }
 
     public Integer getListenPort() {

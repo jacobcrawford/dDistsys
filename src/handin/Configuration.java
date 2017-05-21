@@ -6,4 +6,6 @@ package handin;
 public interface Configuration {
     int[] portRange = {10000, 10999};
     int serverPort = 40499;
+    int connectionAttemptsToNewSequencer = 10;
+    int waitPerConnectionAttempt = 100;
 }
