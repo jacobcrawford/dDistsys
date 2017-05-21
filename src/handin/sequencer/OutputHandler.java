@@ -140,6 +140,7 @@ public class OutputHandler {
 
     private void broadcast(Event event) {
         //
+        synchronized (outputStreams) {
         for (Iterator<ObjectOutputStream> iterator = outputStreams.iterator(); iterator.hasNext(); ) {
             ObjectOutputStream stream = iterator.next();
             try {
@@ -151,7 +152,8 @@ public class OutputHandler {
                 e.printStackTrace();
             }
         }
-    }
+    }}
+
 
     public void stop() {
         broadcastThread.interrupt();

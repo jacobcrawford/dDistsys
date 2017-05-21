@@ -16,11 +16,12 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.LinkedList;
+import java.util.List;
 
 import static handin.Configuration.*;
 
 public class ClientHandler {
-    private final LinkedList<Pair<String, Integer>> clientList = new LinkedList<>();
+    private LinkedList<Pair<String, Integer>> clientList = new LinkedList<>();
     private LeaderToken leaderToken;
     private int number = 0;
     private Socket socket;
@@ -39,7 +40,7 @@ public class ClientHandler {
 
         editor.goOnline();
         //sets the EventReplayer to listening mode
-        tokenThreadHandler = new TokenThreadHandler(listenPort, editor, getLeaderToken());
+        tokenThreadHandler = new TokenThreadHandler(editor, getLeaderToken());
 
         updateLocalReplayer(dec, new FilterIgnoringOutputStrategy(area, this));
         new Thread(tokenThreadHandler).start();
@@ -70,13 +71,21 @@ public class ClientHandler {
         editor.emptyTextAreas();
 
 
+        System.out.println("Current List is: ");
+        for (Pair<String, Integer> stringIntegerPair : clientList) {
+            System.out.println(stringIntegerPair);
+        }
+        System.out.println("--------------");
+
         LeaderToken leaderToken = null;
         int currentSequencerIndex = 1; // This might be zero in second round of crashing
         while (leaderToken == null) {
-            if (weAreNewSequencer(currentSequencerIndex)) new Thread(() -> startSequencer(initialContent)).start();
+            if (weAreNewSequencer(currentSequencerIndex)) new Thread(() -> startSequencer(initialContent, clientList)).start();
             leaderToken = receiveNewLeaderToken();
             currentSequencerIndex++;
         }
+
+        clientList = new LinkedList<>();
 
         System.out.println(leaderToken);
         // Return the socket opened using the leaderToken
@@ -96,7 +105,7 @@ public class ClientHandler {
     /**
      * Starts a sequencer
      */
-    private void startSequencer(String initialContent) {
+    private void startSequencer(String initialContent, List<Pair<String, Integer>> clientList) {
         System.out.println("im the new sequencer");
         // Start the new server, register it on the port and update the local title
         Server server = new Server(serverPort);

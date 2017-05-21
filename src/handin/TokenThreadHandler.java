@@ -9,12 +9,11 @@ import java.net.Socket;
 
 public class TokenThreadHandler implements Runnable {
 
-    private int listenPort;
+    private int listenPort = 0;
     private Editor editor;
     private LeaderToken leaderToken;
 
-    public TokenThreadHandler(int listenPort, Editor editor, LeaderToken leaderToken) {
-        this.listenPort = listenPort;
+    public TokenThreadHandler(Editor editor, LeaderToken leaderToken) {
         this.editor = editor;
         this.leaderToken = leaderToken;
     }
@@ -25,15 +24,17 @@ public class TokenThreadHandler implements Runnable {
 
     @Override
     public void run() {
+        int tempListenPort = Configuration.portRange[0];
         //Listen for Token getters.
         Socket tokenSocket;
-        Server server = new Server(listenPort);
+        Server server = new Server(tempListenPort);
         while (!server.registerOnPort()) {
-            listenPort++;
-            server = new Server(listenPort);
+            tempListenPort++;
+            server = new Server(tempListenPort);
         }
+        listenPort = tempListenPort;
 
-        editor.DisplayError("Listening on port: " + (listenPort));
+        editor.DisplayError("Listening on port: " + (tempListenPort));
         while (!Thread.interrupted()) {
             tokenSocket = server.waitForConnectionFromClient();
                 try {
@@ -59,6 +60,13 @@ public class TokenThreadHandler implements Runnable {
     }
 
     public int getListenPort() {
+        while (listenPort==0) {
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         return listenPort;
     }
 }
