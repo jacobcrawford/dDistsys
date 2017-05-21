@@ -53,7 +53,6 @@ public class ClientHandler {
                 sendAndReceiveEvents(socket, editor);
                 socket = handleServerCrash(editor.getText());
                 editor.emptyTextAreas();
-                System.out.println(socket);
             }
             editor.goOffline();
         });
