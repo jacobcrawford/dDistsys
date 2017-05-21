@@ -20,15 +20,13 @@ public class RemoteOutputStrategy implements OutputStrategy {
         out = createOutputStream();
         try {
             //Write client info to the sequencer
-            System.out.println("Acquireing");
+            System.out.println("Acquiring");
             semaphore.acquire();
             int port = clientHandler.getListenPort();
             if (out != null)
                 out.writeObject(new Pair<>(socket.getLocalAddress().getHostAddress(), port));
             System.out.println("RemoteOut thinks this is listenPort: " + port);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }

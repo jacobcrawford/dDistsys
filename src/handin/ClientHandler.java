@@ -88,7 +88,6 @@ public class ClientHandler {
 
 
         LeaderToken leaderToken = null;
-        int currentSequencerIndex = 1; // This might be zero in second round of crashing
 
         while (leaderToken == null) {
             Pair<String, Integer> elected = clientList.getLast();

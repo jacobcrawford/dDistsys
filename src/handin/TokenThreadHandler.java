@@ -11,9 +11,9 @@ import java.util.concurrent.Semaphore;
 public class TokenThreadHandler implements Runnable {
 
     private final Editor editor;
+    private final Semaphore semaphore;
     private int listenPort = 0;
     private LeaderToken leaderToken;
-    private Semaphore semaphore;
 
     public TokenThreadHandler(Editor editor, LeaderToken leaderToken, Semaphore semaphore) {
         this.editor = editor;
