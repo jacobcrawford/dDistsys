@@ -98,8 +98,10 @@ public class ClientHandler {
                 new Thread(() -> startSequencer(initialContent, clientList)).start();
             }
 
-            if (isAlive(elected)) leaderToken = receiveNewLeaderToken();
-            else clientList.removeLast();
+            while (isAlive(elected) && leaderToken==null) {
+                leaderToken = receiveNewLeaderToken();
+            }
+            if (leaderToken==null) clientList.removeLast();
         }
 
 //        int currentSequencerIndex = 1; // This might be zero in second round of crashing

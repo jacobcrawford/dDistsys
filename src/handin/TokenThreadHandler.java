@@ -39,7 +39,7 @@ public class TokenThreadHandler implements Runnable {
         System.out.println("Released");
         listenPort = tempListenPort;
 
-
+        System.out.println("Actual listening port: " + listenPort);
         editor.DisplayError("Listening on port: " + (tempListenPort));
         while (!Thread.interrupted()) {
             tokenSocket = server.waitForConnectionFromClient();

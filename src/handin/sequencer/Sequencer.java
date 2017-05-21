@@ -64,8 +64,8 @@ public class Sequencer {
                 clientList.add(clientInfo);
                 //Add the ADDEvent to the queue
                 Event event = new ClientListChangeEvent(clientInfo.getFirst(), clientInfo.getSecond(), ClientListChangeEvent.add);
-                eventQueue.add(event);
                 outputHandler.addClient(outputStream);
+                eventQueue.add(event);
 
                 // Create an inputhandler, connect it to the outputhandler, and start its thread
                 InputHandler inputHandler = new InputHandler(inputStream, eventQueue, clientInfo);
