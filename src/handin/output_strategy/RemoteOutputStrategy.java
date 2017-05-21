@@ -19,7 +19,8 @@ public class RemoteOutputStrategy implements OutputStrategy {
         out = createOutputStream();
         try {
             //Write client info to the sequencer
-            out.writeObject(new Pair<String, Integer>(socket.getLocalAddress().getHostAddress(), clientHandler.getListenPort()));
+            if (out != null)
+                out.writeObject(new Pair<>(socket.getLocalAddress().getHostAddress(), clientHandler.getListenPort()));
             System.out.println(clientHandler.getListenPort());
         } catch (IOException e) {
             e.printStackTrace();

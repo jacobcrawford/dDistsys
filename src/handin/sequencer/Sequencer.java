@@ -40,38 +40,58 @@ public class Sequencer {
 
         // Create a new thread for listening, so it can be interrupted
         listenThread = new Thread(() -> {
-            while (!Thread.interrupted()) {
-                try {
-                    // Block until a socket is connected
-                    Socket socket = server.waitForConnectionFromClient();
-                    System.out.println("new client connected");
-                    // Add the outputstream to the handler
-                    ObjectOutputStream outputStream = new ObjectOutputStream((socket.getOutputStream()));
-                    //set the new clients textarea to match:
-                    MyTextEvent initialEvent = new TextInsertEvent(0, textArea.getText());
-                    initialEvent.setNumber(outputHandler.getNumber());
-                    outputStream.writeObject(initialEvent);
-                    System.out.println("Wrote initial event " + textArea.getText() + " to new client");
-                    ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
+            while (!Thread.interrupted()) try {
+                // Block until a socket is connected
+                Socket socket = server.waitForConnectionFromClient();
+                System.out.println("new client connected");
+                // Add the outputstream to the handler
+                ObjectOutputStream outputStream = new ObjectOutputStream((socket.getOutputStream()));
+                //set the new clients textarea to match:
+                MyTextEvent initialEvent = new TextInsertEvent(0, textArea.getText());
+                initialEvent.setNumber(outputHandler.getNumber());
+                outputStream.writeObject(initialEvent);
+                System.out.println("Wrote initial event " + textArea.getText() + " to new client");
+                ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
 
-                    Pair<String, Integer> clientInfo = (Pair<String, Integer>) inputStream.readObject();
-                    pushClientListOnNewClient(outputStream);
-                    //Add client after the push so that it is not added twice
-                    clientList.add(clientInfo);
-                    //Add the ADDEvent to the queue
-                    Event event = new ClientListChangeEvent(clientInfo.getFirst(), clientInfo.getSecond(), ClientListChangeEvent.add);
-                    eventQueue.add(event);
-                    outputHandler.addClient(outputStream);
-
-                    // Create an inputhandler, connect it to the outputhandler, and start its thread
-                    InputHandler inputHandler = new InputHandler(inputStream, eventQueue, clientInfo);
-                    new Thread(inputHandler).start();
-                } catch (IOException | ClassNotFoundException ex) {
-                    ex.printStackTrace();
+                Pair<String, Integer> clientInfo = verifyClientInfoObject(inputStream.readObject());
+                if (clientInfo == null) {
+                    System.out.println("BAD CLIENT INFO OBJECT RECEIVED");
+                    return;
                 }
+
+                pushClientListOnNewClient(outputStream);
+                //Add client after the push so that it is not added twice
+                clientList.add(clientInfo);
+                //Add the ADDEvent to the queue
+                Event event = new ClientListChangeEvent(clientInfo.getFirst(), clientInfo.getSecond(), ClientListChangeEvent.add);
+                eventQueue.add(event);
+                outputHandler.addClient(outputStream);
+
+                // Create an inputhandler, connect it to the outputhandler, and start its thread
+                InputHandler inputHandler = new InputHandler(inputStream, eventQueue, clientInfo);
+                new Thread(inputHandler).start();
+            } catch (IOException | ClassNotFoundException ex) {
+                ex.printStackTrace();
             }
         });
         listenThread.start();
+    }
+
+    /**
+     * Checks if the received object is actually a valid client info {@link Pair}
+     *
+     * @param receivedObject The object to check
+     * @return A valid client info {@link Pair}, or null if the object is invalid
+     */
+    private Pair<String, Integer> verifyClientInfoObject(Object receivedObject) {
+        if (receivedObject instanceof Pair) {
+            Object first = ((Pair) receivedObject).getFirst();
+            Object second = ((Pair) receivedObject).getSecond();
+            if (first instanceof String && second instanceof Integer) {
+                return new Pair<>((String) first, (Integer) second);
+            }
+        }
+        return null;
     }
 
     private void pushClientListOnNewClient(ObjectOutputStream outputStream) {

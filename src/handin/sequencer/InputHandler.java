@@ -14,8 +14,8 @@ public class InputHandler implements Runnable {
     private final ObjectInputStream stream;
     private final Queue<Event> eventQueue;
     private final Boolean running;
-    private String ip;
-    private int port;
+    private final String ip;
+    private final int port;
 
     public InputHandler(ObjectInputStream stream, Queue<Event> eventQueue, Pair<String,Integer> clientInfo) {
         this.ip = clientInfo.getFirst();

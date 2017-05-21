@@ -9,8 +9,8 @@ import java.net.Socket;
 
 public class TokenThreadHandler implements Runnable {
 
+    private final Editor editor;
     private int listenPort = 0;
-    private Editor editor;
     private LeaderToken leaderToken;
 
     public TokenThreadHandler(Editor editor, LeaderToken leaderToken) {
