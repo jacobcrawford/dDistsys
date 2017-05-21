@@ -22,7 +22,9 @@ public class RemoteOutputStrategy implements OutputStrategy {
             //Write client info to the sequencer
             System.out.println("Acquireing");
             semaphore.acquire();
-            out.writeObject(new Pair<String, Integer>(socket.getLocalAddress().getHostAddress(), clientHandler.getListenPort()));
+
+            if (out != null)
+                out.writeObject(new Pair<>(socket.getLocalAddress().getHostAddress(), clientHandler.getListenPort()));
             System.out.println(clientHandler.getListenPort());
         } catch (IOException e) {
             e.printStackTrace();

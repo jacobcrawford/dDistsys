@@ -2,13 +2,10 @@ package handin;
 
 import java.io.Serializable;
 
-/**
- * Created by hjort on 5/8/17.
- */
 public class Pair<T, V> implements Serializable {
 
-    private T first;
-    private V second;
+    private final T first;
+    private final V second;
 
     public Pair(T first, V second) {
         this.first = first;
@@ -19,16 +16,8 @@ public class Pair<T, V> implements Serializable {
         return first;
     }
 
-    public void setFirst(T first) {
-        this.first = first;
-    }
-
     public V getSecond() {
         return second;
-    }
-
-    public void setSecond(V second) {
-        this.second = second;
     }
 
     @Override
@@ -38,8 +27,7 @@ public class Pair<T, V> implements Serializable {
 
         Pair<?, ?> pair = (Pair<?, ?>) o;
 
-        if (first != null ? !first.equals(pair.first) : pair.first != null) return false;
-        return second != null ? second.equals(pair.second) : pair.second == null;
+        return (first != null ? first.equals(pair.first) : pair.first == null) && (second != null ? second.equals(pair.second) : pair.second == null);
     }
 
     @Override

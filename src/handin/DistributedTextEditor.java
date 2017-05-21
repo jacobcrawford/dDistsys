@@ -46,9 +46,8 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private Action quit;
     private ClientHandler clientHandler;
     private Sequencer sequencer;
-    private int clientPortNumber = -1;
 
-    public DistributedTextEditor(int x) {
+    private DistributedTextEditor(int x) {
 
         textArea = new JTextArea(12, 70);
 
@@ -210,7 +209,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
                 sequencer = new Sequencer(server, "");
                 sequencer.start();
 
-                System.out.println(clientHandler.start("localhost", getServerPortNumber(), (Editor) me, outputDec, textArea, portRange[0]));
+                System.out.println(clientHandler.start("localhost", getServerPortNumber(), (Editor) me, outputDec, textArea));
             }
         };
 
@@ -220,9 +219,19 @@ public class DistributedTextEditor extends JFrame implements Editor {
                 //Get the leadertoken
                 setTitle("Connection...");
                 LeaderToken token = getToken(getIP());
+
+                if (token == null) {
+                    JOptionPane.showMessageDialog(me,
+                            "Could not connect to client on specified IP.",
+                            "Error starting listening",
+                            JOptionPane.INFORMATION_MESSAGE,
+                            new ImageIcon("res/trollface.png"));
+                    return;
+                }
+
                 clientHandler = new ClientHandler();
                 clientHandler.setLeaderToken(token);
-                clientHandler.start(token.getIp(), token.getPort(), (Editor) me, outputDec, textArea, portRange[0]);
+                clientHandler.start(token.getIp(), token.getPort(), (Editor) me, outputDec, textArea);
                 setTitle("Connected to " + token.getIp() + " at port " + token.getPort());
             }
         };
@@ -322,6 +331,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
         return textArea.getText();
     }
 
+    @SuppressWarnings("SameReturnValue")
     private int getServerPortNumber() {
         return serverPort;
     }
@@ -359,41 +369,5 @@ public class DistributedTextEditor extends JFrame implements Editor {
         errorField.setText(s);
     }
 
-    public Action getListen() {
-        return listen;
-    }
-
-    public Action getConnect() {
-        return connect;
-    }
-
-    public JTextArea getTextArea() {
-        return textArea;
-    }
-
-    public JTextField getIpAddress() {
-        return ipAddress;
-    }
-
-    public JTextField getErrorField() {
-        return errorField;
-    }
-
-    public ClientHandler getClientHandler() {
-        return clientHandler;
-    }
-
-    public DocumentEventCapturer getInputDec() {
-        return inputDec;
-    }
-
-    public DocumentEventCapturer getOutputDec() {
-        return outputDec;
-    }
-
-
-    public Sequencer getSequencer() {
-        return sequencer;
-    }
 
 }

@@ -31,7 +31,7 @@ public class ClientHandler {
     private TokenThreadHandler tokenThreadHandler;
     private Semaphore semaphore;
 
-    public String start(String serverIp, int serverPort, Editor editor, DocumentEventCapturer dec, JTextArea area, int listenPort) {
+    public String start(String serverIp, int serverPort, Editor editor, DocumentEventCapturer dec, JTextArea area) {
         Client client = new Client(serverPort);
         this.editor = editor;
         semaphore = new Semaphore(0);
@@ -208,9 +208,9 @@ public class ClientHandler {
 //        return null;
     }
 
-    private void sleep(int waitPerConnectionAttempt) {
+    private void sleep(@SuppressWarnings("SameParameterValue") int timeToSleep) {
         try {
-            Thread.sleep(waitPerConnectionAttempt);
+            Thread.sleep(timeToSleep);
         } catch (InterruptedException ignored) {
         }
     }

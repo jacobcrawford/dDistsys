@@ -10,8 +10,8 @@ import java.util.concurrent.Semaphore;
 
 public class TokenThreadHandler implements Runnable {
 
+    private final Editor editor;
     private int listenPort = 0;
-    private Editor editor;
     private LeaderToken leaderToken;
     private Semaphore semaphore;
 
