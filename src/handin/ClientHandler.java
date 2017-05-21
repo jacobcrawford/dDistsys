@@ -18,7 +18,7 @@ import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.List;
 
-import static handin.Configuration.*;
+import static handin.Configuration.serverPort;
 
 public class ClientHandler {
     private LinkedList<Pair<String, Integer>> clientList = new LinkedList<>();
@@ -77,13 +77,40 @@ public class ClientHandler {
         }
         System.out.println("--------------");
 
+
         LeaderToken leaderToken = null;
-        int currentSequencerIndex = 1; // This might be zero in second round of crashing
+
+
         while (leaderToken == null) {
-            if (weAreNewSequencer(currentSequencerIndex)) new Thread(() -> startSequencer(initialContent, clientList)).start();
-            leaderToken = receiveNewLeaderToken();
-            currentSequencerIndex++;
+            Pair<String, Integer> elected = clientList.getLast();
+
+            if (weAreNewSequencer(elected)) {
+                System.out.println(elected + " is the new sequencer starting a sequencer thread");
+                new Thread(() -> startSequencer(initialContent, clientList)).start();
+            }
+
+            if (isAlive(elected)) leaderToken = receiveNewLeaderToken();
+            else clientList.removeLast();
         }
+
+//        int currentSequencerIndex = 1; // This might be zero in second round of crashing
+//        while (leaderToken == null) {
+//            if (weAreNewSequencer(currentSequencerIndex)) new Thread(() -> startSequencer(initialContent, clientList)).start();
+//            leaderToken = receiveNewLeaderToken();
+//            currentSequencerIndex++;
+//        }
+
+
+
+
+
+
+
+
+
+
+
+
 
         clientList = new LinkedList<>();
 
@@ -92,14 +119,31 @@ public class ClientHandler {
         return getSocketFromToken(leaderToken);
     }
 
-    private boolean weAreNewSequencer(int sequencerIndex) {
-        if (sequencerIndex == clientList.size()) sequencerIndex = 0;
+    private boolean isAlive(Pair<String, Integer> elected) {
+        if (weAreNewSequencer(elected)) return true;
+        else {
+            Client client = new Client(elected.getSecond());
+            Socket socket = client.connectToServer(elected.getFirst());
+            if (socket != null) {
+                System.out.println("Socket is not null");
+                try {
+                    socket.close();
+                } catch (IOException ignored) {
+                }
+                return true;
+            } else {
+                System.out.println("Socket is null");
+                return false;
+            }
+        }
+    }
 
-        System.out.println(clientList.get(sequencerIndex));
-        System.out.println(new Pair<>(socket.getLocalAddress().getHostAddress(), getListenPort()));
+    private boolean weAreNewSequencer(Pair<String, Integer> elected) {
+        System.out.println("Elected: " + elected);
+        System.out.println("Me: " + new Pair<>(socket.getLocalAddress().getHostAddress(), getListenPort()));
 
         Pair me = new Pair<>(socket.getLocalAddress().getHostAddress(), getListenPort());
-        return clientList.get(sequencerIndex).equals(me);
+        return elected.equals(me);
     }
 
     /**
@@ -150,12 +194,20 @@ public class ClientHandler {
     }
 
     private LeaderToken receiveNewLeaderToken() {
-        for (int i = 1; i < connectionAttemptsToNewSequencer; i++) {
-            LeaderToken result = tokenThreadHandler.getLeaderToken();
-            if (result != null) return result;
-            sleep(waitPerConnectionAttempt);
+        LeaderToken leaderToken = null;
+        while (leaderToken == null) {
+            leaderToken = tokenThreadHandler.getLeaderToken();
+            System.out.println("Receiving leadertoken");
+            sleep(10);
         }
-        return null;
+        return leaderToken;
+
+//        for (int i = 1; i < connectionAttemptsToNewSequencer; i++) {
+//            LeaderToken result = tokenThreadHandler.getLeaderToken();
+//            if (result != null) return result;
+//            sleep(waitPerConnectionAttempt);
+//        }
+//        return null;
     }
 
     private void sleep(int waitPerConnectionAttempt) {

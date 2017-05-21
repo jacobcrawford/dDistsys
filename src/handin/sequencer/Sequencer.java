@@ -20,11 +20,11 @@ public class Sequencer {
     private final OutputHandler outputHandler;
     private final Server server;
     private final JTextArea textArea;
-    private final LinkedList<handin.Pair<String, Integer>> clientList;
+    private final LinkedList<Pair<String, Integer>> clientList;
     private Thread listenThread;
 
-    public Sequencer(Server server) {
-        this.textArea = new JTextArea();
+    public Sequencer(Server server, String initialContent) {
+        this.textArea = new JTextArea(initialContent);
         this.eventQueue = new LinkedBlockingDeque<>();
         this.outputHandler = new OutputHandler(eventQueue);
         this.server = server;
@@ -54,23 +54,20 @@ public class Sequencer {
                     System.out.println("Wrote initial event " + textArea.getText() + " to new client");
                     ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
 
-
-                    Pair<String,Integer> clientInfo =(handin.Pair) inputStream.readObject();
+                    Pair<String, Integer> clientInfo = (Pair<String, Integer>) inputStream.readObject();
                     pushClientListOnNewClient(outputStream);
                     //Add client after the push so that it is not added twice
                     clientList.add(clientInfo);
                     //Add the ADDEvent to the queue
-                    Event event = new ClientListChangeEvent(clientInfo.getFirst(),clientInfo.getSecond(),ClientListChangeEvent.add);
+                    Event event = new ClientListChangeEvent(clientInfo.getFirst(), clientInfo.getSecond(), ClientListChangeEvent.add);
                     eventQueue.add(event);
                     outputHandler.addClient(outputStream);
 
                     // Create an inputhandler, connect it to the outputhandler, and start its thread
-                    InputHandler inputHandler = new InputHandler(inputStream, eventQueue,clientInfo);
+                    InputHandler inputHandler = new InputHandler(inputStream, eventQueue, clientInfo);
                     new Thread(inputHandler).start();
-                } catch (IOException ex) {
+                } catch (IOException | ClassNotFoundException ex) {
                     ex.printStackTrace();
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
                 }
             }
         });
@@ -78,7 +75,7 @@ public class Sequencer {
     }
 
     private void pushClientListOnNewClient(ObjectOutputStream outputStream) {
-        for (handin.Pair<String, Integer> p : getClientList()) {
+        for (Pair<String, Integer> p : getClientList()) {
             try {
                 outputStream.writeObject(new ClientListChangeEvent(p.getFirst(), p.getSecond(), "ADD"));
                 System.out.println("PUSH CLIENT TO NEW CLIENT:" + p.getFirst() + " " + p.getSecond());
@@ -95,11 +92,7 @@ public class Sequencer {
         listenThread.interrupt();
     }
 
-    public LinkedBlockingDeque<Event> getEventQueue() {
-        return eventQueue;
-    }
-
-    public LinkedList<handin.Pair<String, Integer>> getClientList() {
+    private LinkedList<Pair<String, Integer>> getClientList() {
         return clientList;
     }
 }

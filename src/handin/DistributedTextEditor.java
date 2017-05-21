@@ -207,7 +207,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
                 clientHandler = new ClientHandler();
 
                 clientHandler.setLeaderToken(new LeaderToken(server.getLocalHostAddress(), getServerPortNumber()));
-                sequencer = new Sequencer(server);
+                sequencer = new Sequencer(server, "");
                 sequencer.start();
 
                 System.out.println(clientHandler.start("localhost", getServerPortNumber(), (Editor) me, outputDec, textArea, portRange[0]));
@@ -313,9 +313,8 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
     @Override
     public void startSequencer(Server server, String initialContent) {
-        Sequencer sequencer = new Sequencer(server);
+        Sequencer sequencer = new Sequencer(server, initialContent);
         sequencer.start();
-        textArea.setText(initialContent);
     }
 
     @Override
