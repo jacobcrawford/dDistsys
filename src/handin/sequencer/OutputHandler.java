@@ -1,11 +1,11 @@
 package handin.sequencer;
 
-import handin.communication.ClientListChangeEvent;
 import handin.communication.Event;
 import handin.text_events.MyTextEvent;
 import handin.text_events.TextInsertEvent;
 import handin.text_events.TextRemoveEvent;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.SocketException;
@@ -35,13 +35,14 @@ public class OutputHandler {
         outputStreams.add(newStream);
     }
 
-    public void beginBroadcasting() {
+    public void beginBroadcasting(JTextArea sharedArea) {
         broadcastThread = new Thread(() -> {
             Event event = null;
             while (!Thread.interrupted()) {
                 try {
                     event = eventQueue.take();
                     if (event instanceof MyTextEvent) {
+                        outputToArea(sharedArea,event);
                         MyTextEvent textEvent = (MyTextEvent) event;
                         if (textEvent.getNumber() < number) {
                             adjustOffset(textEvent);
@@ -60,6 +61,15 @@ public class OutputHandler {
             }
         });
         broadcastThread.start();
+    }
+
+    private void outputToArea(JTextArea sharedArea, Event event) {
+        if (event instanceof TextInsertEvent){
+            sharedArea.insert(((TextInsertEvent)event).getText(),((TextInsertEvent) event).getOffset());
+        }else if(event instanceof TextRemoveEvent){
+            sharedArea.replaceRange(null, ((TextRemoveEvent) event).getOffset(), ((TextRemoveEvent) event).getOffset()
+                    + (((TextRemoveEvent) event)).getLength());
+        }
     }
 
     /**

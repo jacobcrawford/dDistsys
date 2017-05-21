@@ -20,7 +20,7 @@ import java.util.LinkedList;
 import static handin.Configuration.serverPort;
 
 public class ClientHandler {
-    private final LinkedList<Pair<String, Integer>> clientList = new LinkedList<>();
+    private LinkedList<Pair<String, Integer>> clientList = new LinkedList<>();
     private LeaderToken leaderToken;
     private int number = 0;
     private Socket socket;
@@ -73,7 +73,6 @@ public class ClientHandler {
             new Thread(() -> startSequencer(initialContent)).start();
         }
         editor.emptyTextAreas();
-
 
         // Block until the newLeaderToken is received
         LeaderToken leaderToken = receiveNewLeaderToken();

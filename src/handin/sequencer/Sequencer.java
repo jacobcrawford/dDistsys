@@ -23,8 +23,8 @@ public class Sequencer {
     private final LinkedList<handin.Pair<String, Integer>> clientList;
     private Thread listenThread;
 
-    public Sequencer(Server server, JTextArea textArea) {
-        this.textArea = textArea;
+    public Sequencer(Server server) {
+        this.textArea = new JTextArea();
         this.eventQueue = new LinkedBlockingDeque<>();
         this.outputHandler = new OutputHandler(eventQueue);
         this.server = server;
@@ -33,7 +33,7 @@ public class Sequencer {
 
     public void start() {
         startListeningForClients();
-        outputHandler.beginBroadcasting();
+        outputHandler.beginBroadcasting(textArea);
     }
 
     private void startListeningForClients() {
