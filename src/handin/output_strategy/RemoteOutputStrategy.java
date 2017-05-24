@@ -6,6 +6,7 @@ import handin.text_events.MyTextEvent;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.util.concurrent.Semaphore;
 
@@ -24,8 +25,8 @@ public class RemoteOutputStrategy implements OutputStrategy {
             semaphore.acquire();
             int port = clientHandler.getListenPort();
             if (out != null)
-                out.writeObject(new Pair<>(socket.getLocalAddress().getHostAddress(), port));
-            System.out.println("RemoteOut thinks this is listenPort: " + port + "and  this is ip" + socket.getLocalAddress().getHostAddress());
+                out.writeObject(new Pair<>(InetAddress.getLocalHost().getHostAddress(), port));
+            System.out.println("RemoteOut thinks this is listenPort: " + port + "and  this is ip" + InetAddress.getLocalHost().getHostAddress());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }

@@ -75,11 +75,6 @@ public class ClientHandler {
         // Remove the now invalid leader token
         tokenThreadHandler.resetLeaderToken();
 
-
-
-
-
-
         System.out.println("Current List is: ");
         for (Pair<String, Integer> stringIntegerPair : clientList) {
             System.out.println(stringIntegerPair);
