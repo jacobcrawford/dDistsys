@@ -45,7 +45,6 @@ public class OutputHandler {
                         if (textEvent.getNumber() < number) {
                             adjustOffset(textEvent);
                         }
-                        outputToArea(sharedArea,event);
                         number++;
                         textEvent.setNumber(number);
                         //remember past events
@@ -56,6 +55,7 @@ public class OutputHandler {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                outputToArea(sharedArea,event);
                 broadcast(event);
             }
         });
