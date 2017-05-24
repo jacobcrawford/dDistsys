@@ -66,6 +66,7 @@ public class OutputHandler {
         if (event instanceof TextInsertEvent){
             sharedArea.insert(((TextInsertEvent)event).getText(),((TextInsertEvent) event).getOffset());
         }else if(event instanceof TextRemoveEvent){
+            System.out.println(event);
             sharedArea.replaceRange(null, ((TextRemoveEvent) event).getOffset(), ((TextRemoveEvent) event).getOffset()
                     + (((TextRemoveEvent) event)).getLength());
         }
@@ -89,8 +90,10 @@ public class OutputHandler {
                 if (oldEvent instanceof TextInsertEvent) {
                     if (newEvent instanceof TextRemoveEvent) {
                         if (newEventOffset >= oldEventOffset) {
+                            System.out.println(newEvent + "," + oldEvent + ": Case 6");
                             newEvent.setOffset(newEventOffset + oldEvent.getLength());
                         } else {
+                            System.out.println(newEvent + "," + oldEvent + ": Case 5");
                             int extraEventLength = newEventEndPoint - oldEventOffset;
 
                             TextRemoveEvent extraEvent = new TextRemoveEvent(oldEventEndPoint, extraEventLength);
@@ -101,6 +104,7 @@ public class OutputHandler {
                             newEvent.setLength(oldEventOffset - newEventOffset);
                         }
                     } else {
+                        System.out.println(newEvent + "," + oldEvent + ": Case 4");
                         newEvent.setOffset(newEventOffset + oldEvent.getLength());
                     }
                 } else if (oldEvent instanceof TextRemoveEvent) {
@@ -109,14 +113,20 @@ public class OutputHandler {
                         // the removeevents overlap, change length/offset, so that we dont double remove
                         if (newEventOffset >= oldEventOffset) {
                             //The oldevents begins before the new. only remove from the point that the old event stopped removing.
-                            newEvent.setOffset(Math.max(newEventOffset, oldEventEndPoint) - (Math.min(newEventOffset, oldEventEndPoint) - (oldEventOffset)));
-                            newEvent.setLength(newEventEndPoint - newEventOffset);
+                            System.out.println(newEvent + "," + oldEvent + ": Case 1");
+                            if (newEventOffset >= oldEventEndPoint) {
+                                newEvent.setOffset(newEventOffset-oldEvent.getLength());
+                            } else {
+                                newEvent.setOffset(oldEventEndPoint - oldEvent.getLength());
+                                newEvent.setLength(newEventEndPoint-oldEventEndPoint);
+                            }
                         } else {
                             //The old revent begins later in the text, only remove until the beginning of it
+                            System.out.println(newEvent + "," + oldEvent + ": Case 2");
                             newEvent.setLength(oldEventOffset - newEventOffset);
                             //the old event doesn't remove all the way to the end of the new event, take care of the tail.
                             if (oldEventEndPoint < newEventEndPoint) {
-                                int extraEventOffSet = oldEventEndPoint - oldEvent.getLength();
+                                int extraEventOffSet = oldEventOffset;
                                 int extraEventLength = newEventEndPoint - oldEventEndPoint;
 
                                 TextRemoveEvent extraEvent = new TextRemoveEvent(extraEventOffSet, extraEventLength);
@@ -125,6 +135,7 @@ public class OutputHandler {
                             }
                         }
                     } else {
+                        System.out.println(newEvent + "," + oldEvent + ": Case 3");
                         newEvent.setOffset(newEventOffset - oldEvent.getLength());
                     }
                 }

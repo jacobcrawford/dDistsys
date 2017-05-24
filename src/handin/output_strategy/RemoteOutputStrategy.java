@@ -25,7 +25,7 @@ public class RemoteOutputStrategy implements OutputStrategy {
             int port = clientHandler.getListenPort();
             if (out != null)
                 out.writeObject(new Pair<>(socket.getLocalAddress().getHostAddress(), port));
-            System.out.println("RemoteOut thinks this is listenPort: " + port);
+            System.out.println("RemoteOut thinks this is listenPort: " + port + "and  this is ip" + socket.getLocalAddress().getHostAddress());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
