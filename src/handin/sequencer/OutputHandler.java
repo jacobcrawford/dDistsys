@@ -41,11 +41,11 @@ public class OutputHandler {
                 try {
                     event = eventQueue.take();
                     if (event instanceof MyTextEvent) {
-                        outputToArea(sharedArea,event);
                         MyTextEvent textEvent = (MyTextEvent) event;
                         if (textEvent.getNumber() < number) {
                             adjustOffset(textEvent);
                         }
+                        outputToArea(sharedArea,event);
                         number++;
                         textEvent.setNumber(number);
                         //remember past events
