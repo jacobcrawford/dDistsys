@@ -1,7 +1,10 @@
 package handin.communication;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+
+import static handin.Configuration.connectionTimeout;
 
 /**
  * Made by Rasmus on 05/04/2017.
@@ -15,7 +18,9 @@ public class Client extends AbstractNetworkUnit {
     public Socket connectToServer(String serverName) {
         Socket res = null;
         try {
-            res = new Socket(serverName, serverPortNumber);
+//            res = new Socket(serverName, serverPortNumber);
+            res = new Socket();
+            res.connect(new InetSocketAddress(serverName, serverPortNumber), connectionTimeout);
         } catch (IOException e) {
             // We return null on IOExceptions
         }
