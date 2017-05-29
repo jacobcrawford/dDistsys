@@ -21,9 +21,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
-import static handin.Configuration.getIP;
-import static handin.Configuration.portRange;
-import static handin.Configuration.serverPort;
+import static handin.Configuration.*;
 
 public class DistributedTextEditor extends JFrame implements Editor {
 
@@ -205,7 +203,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
                 goOnline();
                 //start local "client"
                 clientHandler = new ClientHandler();
-
+                clientHandler.setOnline(true);
                 clientHandler.setLeaderToken(new LeaderToken(getIP(), getServerPortNumber()));
                 sequencer = new Sequencer(server, "");
                 sequencer.start();
@@ -231,6 +229,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
                 }
 
                 clientHandler = new ClientHandler();
+                clientHandler.setOnline(true);
                 clientHandler.setLeaderToken(token);
                 clientHandler.start(token.getIp(), token.getPort(), (Editor) me, outputDec, textArea);
                 setTitle("Connected to " + token.getIp() + " at port " + token.getPort());
@@ -304,7 +303,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
         updateConnectionMenuButtons(false);
 
         setTitle("Disconnected");
-
+        clientHandler.setOnline(false);
         emptyTextAreas();
     }
 

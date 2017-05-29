@@ -53,7 +53,7 @@ public class OutputHandler {
 
                     //TODO remove old events
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    System.out.println("OutputHandler stopped");
                 }
                 outputToArea(sharedArea,event);
                 broadcast(event);

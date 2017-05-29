@@ -31,6 +31,10 @@ public class ClientHandler {
     private Editor editor;
     private TokenThreadHandler tokenThreadHandler;
     private Semaphore semaphore;
+    private Thread tokenHandlerThread;
+    private Thread communicationThread;
+    private boolean online;
+    private Thread onlineReplayThread;
 
     public String start(String serverIp, int serverPort, Editor editor, DocumentEventCapturer dec, JTextArea area) {
         Client client = new Client(serverPort);
@@ -47,15 +51,17 @@ public class ClientHandler {
         tokenThreadHandler = new TokenThreadHandler(editor, getLeaderToken(),semaphore);
 
         updateLocalReplayer(dec, new FilterIgnoringOutputStrategy(area, this));
-        new Thread(tokenThreadHandler).start();
+        tokenHandlerThread = new Thread(tokenThreadHandler);
+        tokenHandlerThread.start();
         // TODO: Handle interruption of this thread
-        Thread communicationThread = new Thread(() -> {
+        communicationThread = new Thread(() -> {
             while (!Thread.interrupted()) {
                 sendAndReceiveEvents(socket, editor);
+                if (online){
                 socket = handleServerCrash(editor.getText());
                 editor.emptyTextAreas();
+                }
             }
-            editor.goOffline();
         });
         communicationThread.start();
 
@@ -218,7 +224,12 @@ public class ClientHandler {
 
     public void stop() {
         try {
+
             if (socket != null) socket.close();
+            onlineReplayThread.interrupt();
+            tokenHandlerThread.interrupt();
+            communicationThread.interrupt();
+            tokenThreadHandler.closeTokenSocket();
             System.out.println("Client disconnected");
         } catch (IOException e) {
             e.printStackTrace();
@@ -235,7 +246,7 @@ public class ClientHandler {
         DocumentEventCapturer inputDec = editor.getInDec();
         DocumentEventCapturer outputDec = editor.getOutDec();
         // Create an event replayer that listens on inputDec and outputs to the socket
-        Thread onlineReplayThread = new Thread(
+        onlineReplayThread = new Thread(
                 new EventReplayer(inputDec, new RemoteOutputStrategy(socket, this,semaphore))
         );
         onlineReplayThread.start();
@@ -313,5 +324,13 @@ public class ClientHandler {
 
     public Integer getListenPort() {
         return tokenThreadHandler.getListenPort();
+    }
+
+    public boolean isOnline() {
+        return online;
+    }
+
+    public void setOnline(boolean online) {
+        this.online = online;
     }
 }

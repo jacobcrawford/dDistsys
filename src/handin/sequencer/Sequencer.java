@@ -45,7 +45,12 @@ public class Sequencer {
                 Socket socket = server.waitForConnectionFromClient();
                 System.out.println("new client connected");
                 // Add the outputstream to the handler
-                ObjectOutputStream outputStream = new ObjectOutputStream((socket.getOutputStream()));
+                ObjectOutputStream outputStream;
+                if (socket!=null) {
+                    outputStream = new ObjectOutputStream((socket.getOutputStream()));
+                }else{
+                    return;
+                }
                 //set the new clients textarea to match:
                 MyTextEvent initialEvent = new TextInsertEvent(0, textArea.getText());
                 initialEvent.setNumber(outputHandler.getNumber());
