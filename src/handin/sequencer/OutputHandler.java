@@ -1,5 +1,6 @@
 package handin.sequencer;
 
+import handin.communication.ClientListChangeEvent;
 import handin.communication.Event;
 import handin.text_events.MyTextEvent;
 import handin.text_events.TextInsertEvent;
@@ -22,8 +23,10 @@ public class OutputHandler {
     private final List<ObjectOutputStream> outputStreams;
     private int number = 0;
     private Thread broadcastThread;
+    private Sequencer sequencer;
 
-    public OutputHandler(BlockingQueue<Event> eventQueue) {
+    public OutputHandler(BlockingQueue<Event> eventQueue, Sequencer sequencer) {
+        this.sequencer = sequencer;
         this.outputStreams = new LinkedList<>();
         this.eventQueue = eventQueue;
         this.pastTextEvents = new HashMap<>();
@@ -69,6 +72,11 @@ public class OutputHandler {
             System.out.println(event);
             sharedArea.replaceRange(null, ((TextRemoveEvent) event).getOffset(), ((TextRemoveEvent) event).getOffset()
                     + (((TextRemoveEvent) event)).getLength());
+        } else if (event instanceof ClientListChangeEvent) {
+            ClientListChangeEvent changeEvent = (ClientListChangeEvent) event;
+            if (changeEvent.getEvent().equals(ClientListChangeEvent.remove)) {
+                sequencer.removeClient(changeEvent);
+            }
         }
     }
 

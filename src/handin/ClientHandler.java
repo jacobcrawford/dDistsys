@@ -257,7 +257,6 @@ public class ClientHandler {
             while (socket.isConnected() && !socket.isClosed()) {
                 Object o = fromSequencer.readObject();
                 if (o instanceof MyTextEvent) {
-                    System.out.println("Event");
                     MyTextEvent event = (MyTextEvent) o;
                     outputDec.addMyTextEvent(event);
                 } else if (o instanceof ClientListChangeEvent) {

@@ -26,7 +26,7 @@ public class Sequencer {
     public Sequencer(Server server, String initialContent) {
         this.textArea = new JTextArea(initialContent);
         this.eventQueue = new LinkedBlockingDeque<>();
-        this.outputHandler = new OutputHandler(eventQueue);
+        this.outputHandler = new OutputHandler(eventQueue,this);
         this.server = server;
         clientList = new LinkedList<>();
     }
@@ -119,5 +119,11 @@ public class Sequencer {
 
     private LinkedList<Pair<String, Integer>> getClientList() {
         return clientList;
+    }
+
+    public void removeClient(ClientListChangeEvent changeEvent) {
+        synchronized(clientList) {
+            clientList.remove(new Pair<>(changeEvent.getIp(),changeEvent.getPort()));
+        }
     }
 }
