@@ -125,7 +125,6 @@ public class ClientHandler {
             Client client = new Client(elected.getSecond());
             Socket socket = client.connectToServer(elected.getFirst());
             if (socket != null) {
-                System.out.println("Socket is not null");
                 try {
                     socket.close();
                 } catch (IOException ignored) {
@@ -293,6 +292,7 @@ public class ClientHandler {
         }
 
         // Stop sending from inputDec to the socket
+        System.out.println("CLIENTHANDLER IS NOW OUT");
         onlineReplayThread.interrupt();
     }
 

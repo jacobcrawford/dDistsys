@@ -36,9 +36,9 @@ public class TokenThreadHandler implements Runnable {
             tempListenPort++;
             server = new Server(tempListenPort);
         }
-        semaphore.release();
         System.out.println("Released");
         listenPort = tempListenPort;
+        semaphore.release();
 
         System.out.println("Actual listening port: " + listenPort);
         editor.DisplayError("Listening on port: " + (tempListenPort));
@@ -50,7 +50,6 @@ public class TokenThreadHandler implements Runnable {
                     tokenSender.writeObject(getLeaderToken());
                     ObjectInputStream inputStream = new ObjectInputStream(tokenSocket.getInputStream());
                     Object input = inputStream.readObject();
-                    System.out.println("got something!");
                     if (input instanceof LeaderToken)
                     {
                         leaderToken = (LeaderToken) input;

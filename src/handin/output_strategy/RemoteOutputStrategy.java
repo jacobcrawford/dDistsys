@@ -21,12 +21,11 @@ public class RemoteOutputStrategy implements OutputStrategy {
         out = createOutputStream();
         try {
             //Write client info to the sequencer
-            System.out.println("Acquiring");
             semaphore.acquire();
             int port = clientHandler.getListenPort();
             if (out != null)
                 out.writeObject(new Pair<>(Configuration.getIP(), port));
-            System.out.println("RemoteOut thinks this is listenPort: " + port + "and  this is ip" + Configuration.getIP());
+            System.out.println("RemoteOut thinks this is listenPort: " + port + "and  this is ip: " + Configuration.getIP());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
@@ -44,7 +43,6 @@ public class RemoteOutputStrategy implements OutputStrategy {
     @Override
     public void output(MyTextEvent event) {
         if (socket.isConnected()) {
-            System.out.println("sending with number: " + clientHandler.getNumber());
             event.setNumber(clientHandler.getNumber());
             //System.out.println("sending event! with number: " + event.getNumber());
             try {

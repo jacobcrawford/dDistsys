@@ -31,7 +31,6 @@ public class FilterIgnoringOutputStrategy implements OutputStrategy {
                         doc.setDocumentFilter(null);
                         area.insert(tie.getText(), event.getOffset());
                         doc.setDocumentFilter(filter);
-                        System.out.println(event.getNumber());
                         clientHandler.setNumber(event.getNumber());
                     }
                 });
