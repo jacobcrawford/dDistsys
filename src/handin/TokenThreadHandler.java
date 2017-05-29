@@ -44,6 +44,7 @@ public class TokenThreadHandler implements Runnable {
         editor.DisplayError("Listening on port: " + (tempListenPort));
         while (!Thread.interrupted()) {
             tokenSocket = server.waitForConnectionFromClient();
+            if (tokenSocket == null) continue;
                 try {
                     ObjectOutputStream tokenSender = new ObjectOutputStream(tokenSocket.getOutputStream());
                     tokenSender.writeObject(getLeaderToken());
