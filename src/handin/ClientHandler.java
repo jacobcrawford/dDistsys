@@ -19,6 +19,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import static handin.Configuration.getIP;
 import static handin.Configuration.serverPort;
 
 public class ClientHandler {
@@ -133,9 +134,9 @@ public class ClientHandler {
 
     private boolean weAreNewSequencer(Pair<String, Integer> elected) {
         System.out.println("Elected: " + elected);
-        System.out.println("Me: " + new Pair<>(socket.getLocalAddress().getHostAddress(), getListenPort()));
+        System.out.println("Me: " + new Pair<>(getIP(), getListenPort()));
 
-        Pair me = new Pair<>(socket.getLocalAddress().getHostAddress(), getListenPort());
+        Pair me = new Pair<>(getIP(), getListenPort());
         return elected.equals(me);
     }
 

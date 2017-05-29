@@ -1,6 +1,7 @@
 package handin.output_strategy;
 
 import handin.ClientHandler;
+import handin.Configuration;
 import handin.Pair;
 import handin.text_events.MyTextEvent;
 
@@ -25,8 +26,8 @@ public class RemoteOutputStrategy implements OutputStrategy {
             semaphore.acquire();
             int port = clientHandler.getListenPort();
             if (out != null)
-                out.writeObject(new Pair<>(InetAddress.getLocalHost().getHostAddress(), port));
-            System.out.println("RemoteOut thinks this is listenPort: " + port + "and  this is ip" + InetAddress.getLocalHost().getHostAddress());
+                out.writeObject(new Pair<>(Configuration.getIP(), port));
+            System.out.println("RemoteOut thinks this is listenPort: " + port + "and  this is ip" + Configuration.getIP());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }

@@ -199,7 +199,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
                             new ImageIcon("res/trollface.png"));
                     return;
                 }
-                setTitle("I'm listening on " + server.getLocalHostAddress() + " on port " + getServerPortNumber());
+                setTitle("I'm listening on " + Configuration.getIP() + " on port " + getServerPortNumber());
 
                 goOnline();
                 //start local "client"
