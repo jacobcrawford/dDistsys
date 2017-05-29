@@ -126,10 +126,10 @@ public class OutputHandler {
                             newEvent.setLength(oldEventOffset - newEventOffset);
                             //the old event doesn't remove all the way to the end of the new event, take care of the tail.
                             if (oldEventEndPoint < newEventEndPoint) {
-                                int extraEventOffSet = oldEventOffset;
+                                // Implicit that extraEventOffSet = oldEventOffset;
                                 int extraEventLength = newEventEndPoint - oldEventEndPoint;
 
-                                TextRemoveEvent extraEvent = new TextRemoveEvent(extraEventOffSet, extraEventLength);
+                                TextRemoveEvent extraEvent = new TextRemoveEvent(oldEventOffset, extraEventLength);
                                 extraEvent.setNumber(i);
                                 eventQueue.add(extraEvent);
                             }

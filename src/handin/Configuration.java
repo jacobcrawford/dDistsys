@@ -6,9 +6,9 @@ import java.net.SocketException;
 import java.util.Enumeration;
 
 public class Configuration {
-    public static int[] portRange = {10000, 10999};
-    public static int serverPort = 40499;
-    public static int connectionTimeout = 10000;
+    public static final int[] portRange = {10000, 10999};
+    public static final int serverPort = 40499;
+    public static final int connectionTimeout = 10000;
     // --Commented out by Inspection (21/05/2017 16.44):int connectionAttemptsToNewSequencer = 100;
     // --Commented out by Inspection (21/05/2017 16.44):int waitPerConnectionAttempt = 100;
 

@@ -7,7 +7,6 @@ import handin.text_events.MyTextEvent;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.util.concurrent.Semaphore;
 
