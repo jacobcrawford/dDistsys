@@ -156,7 +156,8 @@ public class DistributedTextEditor extends JFrame implements Editor {
     private void initializeActions() {
         disconnect = new AbstractAction("disconnect") {
             public void actionPerformed(ActionEvent e) {
-
+                goOffline();
+                clientHandler.setOnline(false);
                 // Resets the listening connection
                 clientHandler.stop();
                 if (sequencer != null) sequencer.stop();
