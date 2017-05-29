@@ -21,6 +21,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
+import static handin.Configuration.getIP;
 import static handin.Configuration.portRange;
 import static handin.Configuration.serverPort;
 
@@ -199,13 +200,13 @@ public class DistributedTextEditor extends JFrame implements Editor {
                             new ImageIcon("res/trollface.png"));
                     return;
                 }
-                setTitle("I'm listening on " + Configuration.getIP() + " on port " + getServerPortNumber());
+                setTitle("I'm listening on " + getIP() + " on port " + getServerPortNumber());
 
                 goOnline();
                 //start local "client"
                 clientHandler = new ClientHandler();
 
-                clientHandler.setLeaderToken(new LeaderToken(server.getLocalHostAddress(), getServerPortNumber()));
+                clientHandler.setLeaderToken(new LeaderToken(getIP(), getServerPortNumber()));
                 sequencer = new Sequencer(server, "");
                 sequencer.start();
 
@@ -218,7 +219,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
             public void actionPerformed(ActionEvent e) {
                 //Get the leadertoken
                 setTitle("Connection...");
-                LeaderToken token = getToken(getIP());
+                LeaderToken token = getToken(getTargetIP());
 
                 if (token == null) {
                     JOptionPane.showMessageDialog(me,
@@ -322,7 +323,8 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
     @Override
     public void startSequencer(Server server, String initialContent) {
-        Sequencer sequencer = new Sequencer(server, initialContent);
+        sequencer.stop();
+        sequencer = new Sequencer(server, initialContent);
         sequencer.start();
     }
 
@@ -336,7 +338,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
         return serverPort;
     }
 
-    private String getIP() {
+    private String getTargetIP() {
         return ipAddress.getText();
     }
 

@@ -148,7 +148,7 @@ public class ClientHandler {
         // Start the new server, register it on the port and update the local title
         Server server = new Server(serverPort);
         server.registerOnPort();
-        String hostAddress = server.getLocalHostAddress();
+        String hostAddress = Configuration.getIP();
         editor.setTitle("I'm listening on " + hostAddress + " on port " + serverPort);
 
         editor.startSequencer(server, initialContent);
