@@ -15,6 +15,7 @@ public class TokenThreadHandler implements Runnable {
     private int listenPort = 0;
     private LeaderToken leaderToken;
     private Socket tokenSocket;
+    private Server server;
 
     public TokenThreadHandler(Editor editor, LeaderToken leaderToken, Semaphore semaphore) {
         this.editor = editor;
@@ -30,7 +31,7 @@ public class TokenThreadHandler implements Runnable {
     public void run() {
         int tempListenPort = Configuration.portRange[0];
         //Listen for Token getters.
-        Server server = new Server(tempListenPort);
+        server = new Server(tempListenPort);
         while (!server.registerOnPort()) {
             tempListenPort++;
             server = new Server(tempListenPort);
@@ -71,6 +72,7 @@ public class TokenThreadHandler implements Runnable {
 
     public void closeTokenSocket(){
         try {
+            server.deregisterOnPort();
             tokenSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
