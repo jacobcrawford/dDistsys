@@ -226,6 +226,7 @@ public class ClientHandler {
         try {
 
             if (socket != null) socket.close();
+            localReplayThread.interrupt();
             onlineReplayThread.interrupt();
             tokenHandlerThread.interrupt();
             communicationThread.interrupt();
@@ -257,6 +258,7 @@ public class ClientHandler {
             while (socket.isConnected() && !socket.isClosed()) {
                 Object o = fromSequencer.readObject();
                 if (o instanceof MyTextEvent) {
+                    System.out.println("Event");
                     MyTextEvent event = (MyTextEvent) o;
                     outputDec.addMyTextEvent(event);
                 } else if (o instanceof ClientListChangeEvent) {
