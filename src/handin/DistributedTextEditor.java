@@ -158,8 +158,8 @@ public class DistributedTextEditor extends JFrame implements Editor {
             public void actionPerformed(ActionEvent e) {
 
                 // Resets the listening connection
-                if (sequencer != null) sequencer.stop();
                 clientHandler.stop();
+                if (sequencer != null) sequencer.stop();
             }
         };
         save = new AbstractAction("save") {
@@ -322,7 +322,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
 
     @Override
     public void startSequencer(Server server, String initialContent) {
-        sequencer.stop();
+        if (sequencer != null) sequencer.stop();
         sequencer = new Sequencer(server, initialContent);
         sequencer.start();
     }
