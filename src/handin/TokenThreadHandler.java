@@ -73,7 +73,8 @@ public class TokenThreadHandler implements Runnable {
     public void closeTokenSocket(){
         try {
             server.deregisterOnPort();
-            tokenSocket.close();
+            if (tokenSocket!=null)
+                tokenSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
