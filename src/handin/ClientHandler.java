@@ -78,7 +78,7 @@ public class ClientHandler {
         semaphore.release();
         System.out.println("Print clients");
         for (Pair p : clientList) System.out.println(p.getFirst()+" "+p.getSecond());
-        // Remove the now invalid leader token
+        // Remove the now invalid leader token.
         tokenThreadHandler.resetLeaderToken();
 
         System.out.println("Current List is: ");
