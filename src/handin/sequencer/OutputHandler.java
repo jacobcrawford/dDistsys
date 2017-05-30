@@ -50,7 +50,7 @@ class OutputHandler {
                         }
                         number++;
                         textEvent.setNumber(number);
-                        //remember past events
+                        //remember past events..
                         pastTextEvents.put(textEvent.getNumber(), textEvent);
                     }
 
