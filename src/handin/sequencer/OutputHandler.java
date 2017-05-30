@@ -91,9 +91,7 @@ class OutputHandler {
         //get the minimum version
         int minimum = Integer.MAX_VALUE;
         for (Integer i : clientVersion.values()) {
-            if (i >= 0) {
                 minimum = Math.min(i, minimum);
-            }
         }
         //the actual cleanup
         Iterator<Integer> iterator = pastTextEvents.keySet().iterator();
