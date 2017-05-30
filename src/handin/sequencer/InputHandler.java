@@ -1,9 +1,9 @@
 package handin.sequencer;
 
 import handin.Pair;
-import handin.communication.ClientListChangeEvent;
-import handin.communication.Event;
-import handin.text_events.MyTextEvent;
+import handin.events.ClientListChangeEvent;
+import handin.events.Event;
+import handin.events.MyTextEvent;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -15,12 +15,15 @@ class InputHandler implements Runnable {
     private final Queue<Event> eventQueue;
     private final String ip;
     private final int port;
+    private static int idCount;
+    private int id;
 
     public InputHandler(ObjectInputStream stream, Queue<Event> eventQueue, Pair<String, Integer> clientInfo) {
         this.ip = clientInfo.getFirst();
         this.port = clientInfo.getSecond();
         this.stream = stream;
         this.eventQueue = eventQueue;
+        this.id = idCount++;
     }
 
     @Override
@@ -29,12 +32,19 @@ class InputHandler implements Runnable {
         try {
             while (!Thread.interrupted()) {
                 MyTextEvent event = (MyTextEvent) stream.readObject();
+                event.setID(id);
                 eventQueue.add(event);
             }
         } catch (IOException | ClassNotFoundException e) {
             System.out.println("InputHandler going down");
         }
         //Add the event that a new client has joined the list.
-        eventQueue.add(new ClientListChangeEvent(ip, port, ClientListChangeEvent.remove));
+        Event lastEvent = new ClientListChangeEvent(ip,port,ClientListChangeEvent.remove);
+        lastEvent.setID(id);
+        eventQueue.add(lastEvent);
+    }
+
+    public int getId() {
+    return id;
     }
 }

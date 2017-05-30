@@ -1,19 +1,16 @@
 package handin.sequencer;
 
-import handin.communication.ClientListChangeEvent;
-import handin.communication.Event;
-import handin.text_events.MyTextEvent;
-import handin.text_events.TextInsertEvent;
-import handin.text_events.TextRemoveEvent;
+import handin.events.ClientListChangeEvent;
+import handin.events.Event;
+import handin.events.MyTextEvent;
+import handin.events.TextInsertEvent;
+import handin.events.TextRemoveEvent;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.SocketException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 class OutputHandler {
@@ -21,9 +18,10 @@ class OutputHandler {
     private final HashMap<Integer, MyTextEvent> pastTextEvents;
     private final BlockingQueue<Event> eventQueue;
     private final List<ObjectOutputStream> outputStreams;
-    private final Sequencer sequencer;
     private int number = 0;
     private Thread broadcastThread;
+    private final Sequencer sequencer;
+    private final HashMap<Integer, Integer> clientVersion;
     private boolean newClientIsConnecting;
 
     public OutputHandler(BlockingQueue<Event> eventQueue, Sequencer sequencer) {
@@ -32,6 +30,7 @@ class OutputHandler {
         this.eventQueue = eventQueue;
         this.pastTextEvents = new HashMap<>();
         this.pastTextEvents.put(0, new TextInsertEvent(0, ""));
+        clientVersion = new HashMap<>();
     }
 
     public synchronized void addClient(ObjectOutputStream newStream) {
@@ -44,6 +43,7 @@ class OutputHandler {
             while (!Thread.interrupted()) {
                 try {
                     event = eventQueue.take();
+                    cleanHistory(event);
                     if (event instanceof MyTextEvent) {
                         MyTextEvent textEvent = (MyTextEvent) event;
                         if (textEvent.getNumber() < number) {
@@ -54,8 +54,6 @@ class OutputHandler {
                         //remember past events..
                         pastTextEvents.put(textEvent.getNumber(), textEvent);
                     }
-
-                    //TODO remove old events
                 } catch (InterruptedException e) {
                     System.out.println("OutputHandler stopped");
                 }
@@ -64,6 +62,39 @@ class OutputHandler {
             }
         });
         broadcastThread.start();
+    }
+
+    private void cleanHistory(Event newEvent) {
+        if (newEvent instanceof TextInsertEvent || newEvent instanceof TextRemoveEvent) {
+            MyTextEvent event = (MyTextEvent) newEvent;
+            clientVersion.put(event.getID(),event.getNumber());
+            cleanup();
+        } else if (newEvent instanceof ClientListChangeEvent) {
+            ClientListChangeEvent event = (ClientListChangeEvent) newEvent;
+            if (event.getEvent().equals(ClientListChangeEvent.remove)){
+                clientVersion.remove(event.getID());
+                cleanup();
+            } else if (event.getEvent().equals(ClientListChangeEvent.add)) {
+                clientVersion.put(event.getID(),-1);
+            }
+        }
+    }
+
+    private void cleanup() {
+        //get the minimum version
+        int minimum = Integer.MAX_VALUE;
+        for (Integer i: clientVersion.values()) {
+            if (i>=0) {
+                minimum = Math.min(i,minimum);
+            }
+        }
+        //the actual cleanup
+        Iterator<Integer> iterator = pastTextEvents.keySet().iterator();
+        while (iterator.hasNext()) {
+            if (iterator.next()<minimum) {
+                iterator.remove();
+            }
+        }
     }
 
     private void outputToArea(JTextArea sharedArea, Event event) {
@@ -99,10 +130,8 @@ class OutputHandler {
                 if (oldEvent instanceof TextInsertEvent) {
                     if (newEvent instanceof TextRemoveEvent) {
                         if (newEventOffset >= oldEventOffset) {
-                            System.out.println(newEvent + "," + oldEvent + ": Case 6");
                             newEvent.setOffset(newEventOffset + oldEvent.getLength());
                         } else {
-                            System.out.println(newEvent + "," + oldEvent + ": Case 5");
                             int extraEventLength = newEventEndPoint - oldEventOffset;
 
                             TextRemoveEvent extraEvent = new TextRemoveEvent(oldEventEndPoint, extraEventLength);
@@ -113,7 +142,6 @@ class OutputHandler {
                             newEvent.setLength(oldEventOffset - newEventOffset);
                         }
                     } else {
-                        System.out.println(newEvent + "," + oldEvent + ": Case 4");
                         newEvent.setOffset(newEventOffset + oldEvent.getLength());
                     }
                 } else if (oldEvent instanceof TextRemoveEvent) {
@@ -122,7 +150,6 @@ class OutputHandler {
                         // the remove events overlap, change length/offset, so that we don't double remove
                         if (newEventOffset >= oldEventOffset) {
                             //The old events begins before the new. only remove from the point that the old event stopped removing.
-                            System.out.println(newEvent + "," + oldEvent + ": Case 1");
                             if (newEventOffset >= oldEventEndPoint) {
                                 newEvent.setOffset(newEventOffset - oldEvent.getLength());
                             } else {
@@ -131,7 +158,6 @@ class OutputHandler {
                             }
                         } else {
                             //The old event begins later in the text, only remove until the beginning of it
-                            System.out.println(newEvent + "," + oldEvent + ": Case 2");
                             newEvent.setLength(oldEventOffset - newEventOffset);
                             //the old event doesn't remove all the way to the end of the new event, take care of the tail.
                             if (oldEventEndPoint < newEventEndPoint) {
@@ -144,7 +170,6 @@ class OutputHandler {
                             }
                         }
                     } else {
-                        System.out.println(newEvent + "," + oldEvent + ": Case 3");
                         newEvent.setOffset(newEventOffset - oldEvent.getLength());
                     }
                 }

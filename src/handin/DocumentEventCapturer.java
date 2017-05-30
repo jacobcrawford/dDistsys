@@ -1,8 +1,8 @@
 package handin;
 
-import handin.text_events.MyTextEvent;
-import handin.text_events.TextInsertEvent;
-import handin.text_events.TextRemoveEvent;
+import handin.events.MyTextEvent;
+import handin.events.TextInsertEvent;
+import handin.events.TextRemoveEvent;
 
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;

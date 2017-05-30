@@ -1,4 +1,4 @@
-package handin.text_events;
+package handin.events;
 
 public class TextInsertEvent extends MyTextEvent {
 

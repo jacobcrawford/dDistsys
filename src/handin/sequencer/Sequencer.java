@@ -1,11 +1,11 @@
 package handin.sequencer;
 
 import handin.Pair;
-import handin.communication.ClientListChangeEvent;
-import handin.communication.Event;
+import handin.events.ClientListChangeEvent;
+import handin.events.Event;
 import handin.communication.Server;
-import handin.text_events.MyTextEvent;
-import handin.text_events.TextInsertEvent;
+import handin.events.MyTextEvent;
+import handin.events.TextInsertEvent;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -73,14 +73,15 @@ public class Sequencer {
                 pushClientListOnNewClient(outputStream);
                 //Add client after the push so that it is not added twice
                 clientList.add(clientInfo);
+                // Create an inputhandler
+                InputHandler inputHandler = new InputHandler(inputStream, eventQueue, clientInfo);
                 //Add the ADDEvent to the queue
                 Event event = new ClientListChangeEvent(clientInfo.getFirst(), clientInfo.getSecond(), ClientListChangeEvent.add);
-                System.out.println();
+                event.setID(inputHandler.getId());
                 outputHandler.addClient(outputStream);
                 eventQueue.add(event);
 
-                // Create an inputhandler, connect it to the outputhandler, and start its thread
-                InputHandler inputHandler = new InputHandler(inputStream, eventQueue, clientInfo);
+                //start the inputHandler thread
                 new Thread(inputHandler).start();
 
                 // Tell the outputHandler that a new client is done connecting, so it resumes broadcasting
@@ -122,9 +123,9 @@ public class Sequencer {
     }
 
     public void stop() {
-        outputHandler.stop();
-        server.deregisterOnPort();
-        listenThread.interrupt();
+       server.deregisterOnPort();
+       outputHandler.stop();
+       listenThread.interrupt();
     }
 
     private LinkedList<Pair<String, Integer>> getClientList() {

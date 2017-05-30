@@ -3,7 +3,7 @@ package handin.output_strategy;
 import handin.ClientHandler;
 import handin.Configuration;
 import handin.Pair;
-import handin.text_events.MyTextEvent;
+import handin.events.MyTextEvent;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;

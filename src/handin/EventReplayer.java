@@ -1,7 +1,7 @@
 package handin;
 
 import handin.output_strategy.OutputStrategy;
-import handin.text_events.MyTextEvent;
+import handin.events.MyTextEvent;
 
 /**
  * Takes the event recorded by the DocumentEventCapturer and replays

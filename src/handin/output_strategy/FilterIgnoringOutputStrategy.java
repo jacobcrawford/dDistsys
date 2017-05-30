@@ -1,9 +1,9 @@
 package handin.output_strategy;
 
 import handin.ClientHandler;
-import handin.text_events.MyTextEvent;
-import handin.text_events.TextInsertEvent;
-import handin.text_events.TextRemoveEvent;
+import handin.events.MyTextEvent;
+import handin.events.TextInsertEvent;
+import handin.events.TextRemoveEvent;
 
 import javax.swing.*;
 import javax.swing.text.AbstractDocument;

@@ -1,12 +1,12 @@
 package handin;
 
 import handin.communication.Client;
-import handin.communication.ClientListChangeEvent;
+import handin.events.ClientListChangeEvent;
 import handin.communication.Server;
 import handin.output_strategy.FilterIgnoringOutputStrategy;
 import handin.output_strategy.OutputStrategy;
 import handin.output_strategy.RemoteOutputStrategy;
-import handin.text_events.MyTextEvent;
+import handin.events.MyTextEvent;
 
 import javax.swing.*;
 import java.io.EOFException;
@@ -19,8 +19,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
-import static handin.Configuration.getIP;
-import static handin.Configuration.serverPort;
+import static handin.Configuration.*;
 
 public class ClientHandler {
     private LinkedList<Pair<String, Integer>> clientList = new LinkedList<>();
@@ -48,7 +47,7 @@ public class ClientHandler {
 
         editor.goOnline();
         //sets the EventReplayer to listening mode
-        tokenThreadHandler = new TokenThreadHandler(editor, getLeaderToken(),semaphore);
+        tokenThreadHandler = new TokenThreadHandler(editor, getLeaderToken(), semaphore);
 
         updateLocalReplayer(dec, new FilterIgnoringOutputStrategy(area, this));
         tokenHandlerThread = new Thread(tokenThreadHandler);
@@ -56,9 +55,9 @@ public class ClientHandler {
         communicationThread = new Thread(() -> {
             while (!Thread.interrupted()) {
                 sendAndReceiveEvents(socket, editor);
-                if (online){
-                socket = handleServerCrash(editor.getText());
-                editor.emptyTextAreas();
+                if (online) {
+                    socket = handleServerCrash(editor.getText());
+                    editor.emptyTextAreas();
                 }
             }
         });
@@ -66,6 +65,7 @@ public class ClientHandler {
 
         return "Connected to " + serverIp + " on port " + serverPort;
     }
+
 
     /**
      * Handles whenever a sequencer goes down
@@ -77,7 +77,7 @@ public class ClientHandler {
         //allow remoteOutStrategy to send port once more.
         semaphore.release();
         System.out.println("Print clients");
-        for (Pair p : clientList) System.out.println(p.getFirst()+" "+p.getSecond());
+        for (Pair p : clientList) System.out.println(p.getFirst() + " " + p.getSecond());
         // Remove the now invalid leader token.
         tokenThreadHandler.resetLeaderToken();
 
@@ -91,7 +91,7 @@ public class ClientHandler {
 
         while (leaderToken == null) {
             Pair<String, Integer> elected;
-            if (clientList.size()>1) {
+            if (clientList.size() > 1) {
                 elected = clientList.get(1);
             } else {
                 elected = clientList.get(0);
@@ -102,10 +102,10 @@ public class ClientHandler {
                 new Thread(() -> startSequencer(initialContent, clientList)).start();
             }
 
-            while (isAlive(elected) && leaderToken==null) {
+            while (isAlive(elected) && leaderToken == null) {
                 leaderToken = receiveNewLeaderToken();
             }
-            if (leaderToken==null) clientList.remove(elected);
+            if (leaderToken == null) clientList.remove(elected);
         }
 
         clientList = new LinkedList<>();
@@ -189,14 +189,12 @@ public class ClientHandler {
     }
 
     private LeaderToken receiveNewLeaderToken() {
-        LeaderToken leaderToken = null;
-        System.out.println("Receiving leadertoken");
-        while (leaderToken == null) {
-            leaderToken = tokenThreadHandler.getLeaderToken();
-            sleep(10);
+        for (int i = 0; i < connectionAttemptsToNewSequencer; i++) {
+            LeaderToken result = tokenThreadHandler.getLeaderToken();
+            if (result != null) return result;
+            sleep(waitPerConnectionAttempt);
         }
-        System.out.println("Received leadertoken");
-        return leaderToken;
+        return null;
     }
 
     private void sleep(@SuppressWarnings("SameParameterValue") int timeToSleep) {
@@ -237,7 +235,7 @@ public class ClientHandler {
         DocumentEventCapturer outputDec = editor.getOutDec();
         // Create an event replayer that listens on inputDec and outputs to the socket
         onlineReplayThread = new Thread(
-                new EventReplayer(inputDec, new RemoteOutputStrategy(socket, this,semaphore))
+                new EventReplayer(inputDec, new RemoteOutputStrategy(socket, this, semaphore))
         );
         onlineReplayThread.start();
 
@@ -254,10 +252,11 @@ public class ClientHandler {
                     Pair<String, Integer> client = new Pair<>(e.getIp(), e.getPort());
                     switch (e.getEvent()) {
                         case "ADD":
-                            if (!clientList.contains(client)){
-                            clientList.add(client);
-                            System.out.println("added " + client.getFirst() + " " + client.getSecond());
-                            break;}else {
+                            if (!clientList.contains(client)) {
+                                clientList.add(client);
+                                System.out.println("added " + client.getFirst() + " " + client.getSecond());
+                                break;
+                            } else {
                                 System.out.println("client already in list");
                                 break;
                             }

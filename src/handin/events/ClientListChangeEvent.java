@@ -1,4 +1,4 @@
-package handin.communication;
+package handin.events;
 
 import java.io.Serializable;
 
@@ -8,6 +8,7 @@ public class ClientListChangeEvent implements Event, Serializable {
     private final String ip;
     private final int port;
     private final String event;
+    private int id;
 
     public ClientListChangeEvent(String ip, int port, String event) {
         this.ip = ip;
@@ -27,4 +28,13 @@ public class ClientListChangeEvent implements Event, Serializable {
         return event;
     }
 
+    @Override
+    public int getID() {
+        return id;
+    }
+
+    @Override
+    public void setID(int id) {
+        this.id = id;
+    }
 }
