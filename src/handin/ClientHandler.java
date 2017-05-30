@@ -87,7 +87,6 @@ public class ClientHandler {
         }
         System.out.println("--------------");
 
-
         LeaderToken leaderToken = null;
 
         while (leaderToken == null) {
@@ -191,11 +190,12 @@ public class ClientHandler {
 
     private LeaderToken receiveNewLeaderToken() {
         LeaderToken leaderToken = null;
+        System.out.println("Receiving leadertoken");
         while (leaderToken == null) {
             leaderToken = tokenThreadHandler.getLeaderToken();
-            System.out.println("Receiving leadertoken");
             sleep(10);
         }
+        System.out.println("Received leadertoken");
         return leaderToken;
     }
 
@@ -254,9 +254,14 @@ public class ClientHandler {
                     Pair<String, Integer> client = new Pair<>(e.getIp(), e.getPort());
                     switch (e.getEvent()) {
                         case "ADD":
+                            if (!clientList.contains(client)){
                             clientList.add(client);
                             System.out.println("added " + client.getFirst() + " " + client.getSecond());
-                            break;
+                            break;}else {
+                                System.out.println("client already in list");
+                                break;
+                            }
+
                         case "REMOVE":
                             clientList.remove(client);
                             System.out.println("removed");

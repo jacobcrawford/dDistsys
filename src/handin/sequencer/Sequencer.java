@@ -75,6 +75,7 @@ public class Sequencer {
                 clientList.add(clientInfo);
                 //Add the ADDEvent to the queue
                 Event event = new ClientListChangeEvent(clientInfo.getFirst(), clientInfo.getSecond(), ClientListChangeEvent.add);
+                System.out.println();
                 outputHandler.addClient(outputStream);
                 eventQueue.add(event);
 

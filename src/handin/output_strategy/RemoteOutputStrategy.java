@@ -25,8 +25,7 @@ public class RemoteOutputStrategy implements OutputStrategy {
             int port = clientHandler.getListenPort();
             if (out != null)
                 out.writeObject(new Pair<>(Configuration.getIP(), port));
-            System.out.println("RemoteOut thinks this is listenPort: " + port + "and  this is ip: " + Configuration.getIP());
-        } catch (IOException | InterruptedException e) {
+                    } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }

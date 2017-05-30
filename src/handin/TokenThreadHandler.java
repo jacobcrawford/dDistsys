@@ -40,7 +40,6 @@ class TokenThreadHandler implements Runnable {
         listenPort = tempListenPort;
         semaphore.release();
 
-        System.out.println("Actual listening port: " + listenPort);
         editor.DisplayError("Listening on port: " + (tempListenPort));
         while (!Thread.interrupted()) {
             tokenSocket = server.waitForConnectionFromClient();

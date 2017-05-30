@@ -257,6 +257,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
                     if (receivedObject instanceof LeaderToken) {
                         return (LeaderToken) receivedObject;
                     }else{
+                        System.out.println("This was received: " + receivedObject.getClass());
                         System.out.println("OBJECT WAS NOT A TOKEN" );
                     }
                 }
