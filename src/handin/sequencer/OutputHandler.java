@@ -21,9 +21,10 @@ class OutputHandler {
     private final HashMap<Integer, MyTextEvent> pastTextEvents;
     private final BlockingQueue<Event> eventQueue;
     private final List<ObjectOutputStream> outputStreams;
+    private final Sequencer sequencer;
     private int number = 0;
     private Thread broadcastThread;
-    private final Sequencer sequencer;
+    private boolean newClientIsConnecting;
 
     public OutputHandler(BlockingQueue<Event> eventQueue, Sequencer sequencer) {
         this.sequencer = sequencer;
@@ -58,7 +59,7 @@ class OutputHandler {
                 } catch (InterruptedException e) {
                     System.out.println("OutputHandler stopped");
                 }
-                outputToArea(sharedArea,event);
+                outputToArea(sharedArea, event);
                 broadcast(event);
             }
         });
@@ -66,9 +67,9 @@ class OutputHandler {
     }
 
     private void outputToArea(JTextArea sharedArea, Event event) {
-        if (event instanceof TextInsertEvent){
-            sharedArea.insert(((TextInsertEvent)event).getText(),((TextInsertEvent) event).getOffset());
-        }else if(event instanceof TextRemoveEvent){
+        if (event instanceof TextInsertEvent) {
+            sharedArea.insert(((TextInsertEvent) event).getText(), ((TextInsertEvent) event).getOffset());
+        } else if (event instanceof TextRemoveEvent) {
             System.out.println(event);
             sharedArea.replaceRange(null, ((TextRemoveEvent) event).getOffset(), ((TextRemoveEvent) event).getOffset()
                     + (((TextRemoveEvent) event)).getLength());
@@ -156,25 +157,34 @@ class OutputHandler {
         }
     }
 
-    private synchronized void broadcast(Event event) {
+    private void broadcast(Event event) {
+        while (newClientIsConnecting) sleep();
+
         synchronized (outputStreams) {
-        for (Iterator<ObjectOutputStream> iterator = outputStreams.iterator(); iterator.hasNext(); ) {
-            ObjectOutputStream stream = iterator.next();
-            try {
-                stream.writeObject(event);
-            } catch (SocketException e) {
-                System.out.println("Dead OutputStream removed from OutputHandler");
-                iterator.remove();
-            } catch (IOException e) {
-                e.printStackTrace();
+            for (Iterator<ObjectOutputStream> iterator = outputStreams.iterator(); iterator.hasNext(); ) {
+                ObjectOutputStream stream = iterator.next();
+                try {
+                    stream.writeObject(event);
+                } catch (SocketException e) {
+                    System.out.println("Dead OutputStream removed from OutputHandler");
+                    iterator.remove();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
-    }}
+    }
 
+    private void sleep() {
+        try {
+            Thread.sleep(handin.Configuration.waitForNewClientToConnectTimeout);
+        } catch (InterruptedException ignored) {
+        }
+    }
 
     public synchronized void stop() {
         broadcastThread.interrupt();
-        for (ObjectOutputStream stream: outputStreams) {
+        for (ObjectOutputStream stream : outputStreams) {
             try {
                 stream.close();
             } catch (IOException e) {
@@ -186,5 +196,9 @@ class OutputHandler {
 
     public int getNumber() {
         return number;
+    }
+
+    public void setNewClientIsConnecting(boolean newClientIsConnecting) {
+        this.newClientIsConnecting = newClientIsConnecting;
     }
 }

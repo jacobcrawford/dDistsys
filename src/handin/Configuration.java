@@ -9,6 +9,7 @@ public class Configuration {
     public static final int[] portRange = {10000, 10999};
     public static final int serverPort = 40499;
     public static final int connectionTimeout = 10000;
+    public static final int waitForNewClientToConnectTimeout = 50;
     // --Commented out by Inspection (21/05/2017 16.44):int connectionAttemptsToNewSequencer = 100;
     // --Commented out by Inspection (21/05/2017 16.44):int waitPerConnectionAttempt = 100;
 

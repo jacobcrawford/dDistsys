@@ -26,7 +26,7 @@ public class Sequencer {
     public Sequencer(Server server, String initialContent) {
         this.textArea = new JTextArea(initialContent);
         this.eventQueue = new LinkedBlockingDeque<>();
-        this.outputHandler = new OutputHandler(eventQueue,this);
+        this.outputHandler = new OutputHandler(eventQueue, this);
         this.server = server;
         clientList = new LinkedList<>();
     }
@@ -46,14 +46,19 @@ public class Sequencer {
                 System.out.println("new client connected");
                 // Add the outputstream to the handler
                 ObjectOutputStream outputStream;
-                if (socket!=null) {
+                if (socket != null) {
                     outputStream = new ObjectOutputStream((socket.getOutputStream()));
-                }else{
+                } else {
                     return;
                 }
+
+                // Tell the outputHandler that a new client is connecting, so it stops broadcasting temporarily
+                outputHandler.setNewClientIsConnecting(true);
+
                 //set the new clients textarea to match:
                 MyTextEvent initialEvent = new TextInsertEvent(0, textArea.getText());
                 initialEvent.setNumber(outputHandler.getNumber());
+
                 outputStream.writeObject(initialEvent);
                 System.out.println("Wrote initial event " + textArea.getText() + " to new client");
                 ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
@@ -61,6 +66,7 @@ public class Sequencer {
                 Pair<String, Integer> clientInfo = verifyClientInfoObject(inputStream.readObject());
                 if (clientInfo == null) {
                     System.out.println("BAD CLIENT INFO OBJECT RECEIVED");
+                    outputHandler.setNewClientIsConnecting(false);
                     return;
                 }
 
@@ -75,6 +81,9 @@ public class Sequencer {
                 // Create an inputhandler, connect it to the outputhandler, and start its thread
                 InputHandler inputHandler = new InputHandler(inputStream, eventQueue, clientInfo);
                 new Thread(inputHandler).start();
+
+                // Tell the outputHandler that a new client is done connecting, so it resumes broadcasting
+                outputHandler.setNewClientIsConnecting(false);
             } catch (IOException | ClassNotFoundException ex) {
                 ex.printStackTrace();
             }
@@ -122,8 +131,8 @@ public class Sequencer {
     }
 
     public void removeClient(ClientListChangeEvent changeEvent) {
-        synchronized(clientList) {
-            clientList.remove(new Pair<>(changeEvent.getIp(),changeEvent.getPort()));
+        synchronized (clientList) {
+            clientList.remove(new Pair<>(changeEvent.getIp(), changeEvent.getPort()));
         }
     }
 }
