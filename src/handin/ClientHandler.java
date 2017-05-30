@@ -53,7 +53,6 @@ public class ClientHandler {
         updateLocalReplayer(dec, new FilterIgnoringOutputStrategy(area, this));
         tokenHandlerThread = new Thread(tokenThreadHandler);
         tokenHandlerThread.start();
-        // TODO: Handle interruption of this thread
         communicationThread = new Thread(() -> {
             while (!Thread.interrupted()) {
                 sendAndReceiveEvents(socket, editor);
@@ -104,13 +103,6 @@ public class ClientHandler {
             }
             if (leaderToken==null) clientList.removeLast();
         }
-
-//        int currentSequencerIndex = 1; // This might be zero in second round of crashing
-//        while (leaderToken == null) {
-//            if (weAreNewSequencer(currentSequencerIndex)) new Thread(() -> startSequencer(initialContent, clientList)).start();
-//            leaderToken = receiveNewLeaderToken();
-//            currentSequencerIndex++;
-//        }
 
         clientList = new LinkedList<>();
 
@@ -200,13 +192,6 @@ public class ClientHandler {
             sleep(10);
         }
         return leaderToken;
-
-//        for (int i = 1; i < connectionAttemptsToNewSequencer; i++) {
-//            LeaderToken result = tokenThreadHandler.getLeaderToken();
-//            if (result != null) return result;
-//            sleep(waitPerConnectionAttempt);
-//        }
-//        return null;
     }
 
     private void sleep(@SuppressWarnings("SameParameterValue") int timeToSleep) {
@@ -285,7 +270,7 @@ public class ClientHandler {
             // SocketException is thrown when you disconnect
             // EOFException is thrown when the other disconnects
             System.out.println("Server disconnected");
-//            editor.emptyTextAreas();
+            //editor.emptyTextAreas();
         } catch (IOException | ClassNotFoundException ex) {
             ex.printStackTrace();
         }

@@ -157,7 +157,6 @@ public class OutputHandler {
     }
 
     private synchronized void broadcast(Event event) {
-        //
         synchronized (outputStreams) {
         for (Iterator<ObjectOutputStream> iterator = outputStreams.iterator(); iterator.hasNext(); ) {
             ObjectOutputStream stream = iterator.next();

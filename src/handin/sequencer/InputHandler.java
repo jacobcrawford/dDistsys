@@ -25,7 +25,7 @@ public class InputHandler implements Runnable {
         this.eventQueue = eventQueue;
 
         //Add the event that a new client has joined the list.
-        //
+
     }
 
     @Override
