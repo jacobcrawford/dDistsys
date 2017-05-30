@@ -91,7 +91,12 @@ public class ClientHandler {
         LeaderToken leaderToken = null;
 
         while (leaderToken == null) {
-            Pair<String, Integer> elected = clientList.getLast();
+            Pair<String, Integer> elected;
+            if (clientList.size()>1) {
+                elected = clientList.get(1);
+            } else {
+                elected = clientList.get(0);
+            }
 
             if (weAreNewSequencer(elected)) {
                 System.out.println(elected + " is the new sequencer starting a sequencer thread");
@@ -101,7 +106,7 @@ public class ClientHandler {
             while (isAlive(elected) && leaderToken==null) {
                 leaderToken = receiveNewLeaderToken();
             }
-            if (leaderToken==null) clientList.removeLast();
+            if (leaderToken==null) clientList.remove(elected);
         }
 
         clientList = new LinkedList<>();
