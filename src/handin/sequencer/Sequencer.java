@@ -1,9 +1,9 @@
 package handin.sequencer;
 
 import handin.Pair;
+import handin.communication.Server;
 import handin.events.ClientListChangeEvent;
 import handin.events.Event;
-import handin.communication.Server;
 import handin.events.MyTextEvent;
 import handin.events.TextInsertEvent;
 
@@ -50,7 +50,6 @@ public class Sequencer {
                     outputStream = new ObjectOutputStream((socket.getOutputStream()));
                 } else {
                     return;
-
                 }
 
                 // Tell the outputHandler that a new client is connecting, so it stops broadcasting temporarily
@@ -124,9 +123,9 @@ public class Sequencer {
     }
 
     public void stop() {
-       server.deregisterOnPort();
-       outputHandler.stop();
-       listenThread.interrupt();
+        outputHandler.stop();
+        server.deregisterOnPort();
+        listenThread.interrupt();
     }
 
     private LinkedList<Pair<String, Integer>> getClientList() {

@@ -6,11 +6,11 @@ import java.net.SocketException;
 import java.util.Enumeration;
 
 public class Configuration {
-    static final int[] portRange = {10000, 10999};
-    static final int serverPort = 40499;
     public static final int connectionTimeout = 10000;
     public static final int waitForNewClientToConnectTimeout = 50;
-    static final int connectionAttemptsToNewSequencer = 100;
+    static final int[] portRange = {10000, 10999};
+    static final int serverPort = 40499;
+    static final int connectionAttemptsToNewSequencer = 10;
     static final int waitPerConnectionAttempt = 100;
 
     private static String ip = null;

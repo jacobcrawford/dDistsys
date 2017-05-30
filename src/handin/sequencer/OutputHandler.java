@@ -1,39 +1,39 @@
 package handin.sequencer;
 
-import handin.events.ClientListChangeEvent;
-import handin.events.Event;
-import handin.events.MyTextEvent;
-import handin.events.TextInsertEvent;
-import handin.events.TextRemoveEvent;
+import handin.events.*;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.SocketException;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 class OutputHandler {
 
     private final HashMap<Integer, MyTextEvent> pastTextEvents;
     private final BlockingQueue<Event> eventQueue;
-    private final List<ObjectOutputStream> outputStreams;
-    private int number = 0;
-    private Thread broadcastThread;
+    private final ConcurrentSkipListSet<ObjectOutputStream> outputStreams;
     private final Sequencer sequencer;
     private final HashMap<Integer, Integer> clientVersion;
+    private int number = 0;
+    private Thread broadcastThread;
     private boolean newClientIsConnecting;
+    private int earliestEvent;
 
     public OutputHandler(BlockingQueue<Event> eventQueue, Sequencer sequencer) {
         this.sequencer = sequencer;
-        this.outputStreams = new LinkedList<>();
+        this.outputStreams = new ConcurrentSkipListSet<>(Comparator.comparingInt(Object::hashCode));
         this.eventQueue = eventQueue;
         this.pastTextEvents = new HashMap<>();
         this.pastTextEvents.put(0, new TextInsertEvent(0, ""));
         clientVersion = new HashMap<>();
     }
 
-    public synchronized void addClient(ObjectOutputStream newStream) {
+    public void addClient(ObjectOutputStream newStream) {
         outputStreams.add(newStream);
     }
 
@@ -46,6 +46,11 @@ class OutputHandler {
                     int oldNumber = 0;
                     if (event instanceof MyTextEvent) {
                         MyTextEvent textEvent = (MyTextEvent) event;
+
+                        // If receiving an event with with a number ealier than the earliest, then that
+                        // client has not yet seen the initialEvent, and therefore the event is ignored.
+                        if (textEvent.getNumber() < earliestEvent) continue;
+
                         oldNumber = textEvent.getNumber();
                         if (textEvent.getNumber() < number) {
                             adjustOffset(textEvent);
@@ -55,7 +60,7 @@ class OutputHandler {
                         //remember past events..
                         pastTextEvents.put(textEvent.getNumber(), textEvent);
                     }
-                    cleanHistory(event,oldNumber);
+                    cleanHistory(event, oldNumber);
                 } catch (InterruptedException e) {
                     System.out.println("OutputHandler stopped");
                 }
@@ -66,18 +71,18 @@ class OutputHandler {
         broadcastThread.start();
     }
 
-    private void cleanHistory(Event newEvent,int oldNumber) {
+    private void cleanHistory(Event newEvent, int oldNumber) {
         if (newEvent instanceof TextInsertEvent || newEvent instanceof TextRemoveEvent) {
             MyTextEvent event = (MyTextEvent) newEvent;
-            clientVersion.put(event.getID(),oldNumber);
+            clientVersion.put(event.getID(), oldNumber);
             cleanup();
         } else if (newEvent instanceof ClientListChangeEvent) {
             ClientListChangeEvent event = (ClientListChangeEvent) newEvent;
-            if (event.getEvent().equals(ClientListChangeEvent.remove)){
+            if (event.getEvent().equals(ClientListChangeEvent.remove)) {
                 clientVersion.remove(event.getID());
                 cleanup();
             } else if (event.getEvent().equals(ClientListChangeEvent.add)) {
-                clientVersion.put(event.getID(),-1);
+                clientVersion.put(event.getID(), -1);
             }
         }
     }
@@ -85,18 +90,20 @@ class OutputHandler {
     private void cleanup() {
         //get the minimum version
         int minimum = Integer.MAX_VALUE;
-        for (Integer i: clientVersion.values()) {
-            if (i>=0) {
-                minimum = Math.min(i,minimum);
+        for (Integer i : clientVersion.values()) {
+            if (i >= 0) {
+                minimum = Math.min(i, minimum);
             }
         }
         //the actual cleanup
         Iterator<Integer> iterator = pastTextEvents.keySet().iterator();
         while (iterator.hasNext()) {
-            if (iterator.next()<minimum) {
+            if (iterator.next() < minimum) {
                 iterator.remove();
             }
         }
+
+        this.earliestEvent = minimum;
     }
 
     private void outputToArea(JTextArea sharedArea, Event event) {
@@ -187,17 +194,15 @@ class OutputHandler {
     private void broadcast(Event event) {
         while (newClientIsConnecting) sleep();
 
-        synchronized (outputStreams) {
-            for (Iterator<ObjectOutputStream> iterator = outputStreams.iterator(); iterator.hasNext(); ) {
-                ObjectOutputStream stream = iterator.next();
-                try {
-                    stream.writeObject(event);
-                } catch (SocketException e) {
-                    System.out.println("Dead OutputStream removed from OutputHandler");
-                    iterator.remove();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        for (Iterator<ObjectOutputStream> iterator = outputStreams.iterator(); iterator.hasNext(); ) {
+            ObjectOutputStream stream = iterator.next();
+            try {
+                stream.writeObject(event);
+            } catch (SocketException e) {
+                System.out.println("Dead OutputStream removed from OutputHandler");
+                iterator.remove();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -209,16 +214,13 @@ class OutputHandler {
         }
     }
 
-    public synchronized void stop() {
+    public void stop() {
         broadcastThread.interrupt();
-        synchronized (outputStreams) {
-            for (ObjectOutputStream stream : outputStreams) {
-                try {
-                    stream.close();
-                } catch (IOException e) {
-                    System.out.println("Closing connection to client");
-                    e.printStackTrace();
-                }
+        for (ObjectOutputStream stream : outputStreams) {
+            try {
+                stream.close();
+            } catch (IOException e) {
+                System.out.println("Closing connection to client");
             }
         }
     }
