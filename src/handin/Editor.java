@@ -2,8 +2,7 @@ package handin;
 
 import handin.communication.Server;
 
-public interface Editor {
-    void goOffline();
+interface Editor {
 
     void goOnline();
 

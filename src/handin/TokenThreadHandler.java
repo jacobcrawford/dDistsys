@@ -8,7 +8,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.Semaphore;
 
-public class TokenThreadHandler implements Runnable {
+class TokenThreadHandler implements Runnable {
 
     private final Editor editor;
     private final Semaphore semaphore;

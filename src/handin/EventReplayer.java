@@ -10,7 +10,7 @@ import handin.text_events.MyTextEvent;
  *
  * @author Jesper Buus Nielsen
  */
-public class EventReplayer implements Runnable {
+class EventReplayer implements Runnable {
 
     private final DocumentEventCapturer dec;
     private final OutputStrategy outputStrategy;

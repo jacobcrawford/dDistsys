@@ -240,7 +240,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
     }
 
     /**
-     * Retreives the {@link LeaderToken} from the client located at the specified ip.
+     * Retrieves the {@link LeaderToken} from the client located at the specified ip.
      *
      * @param hostname The hostname of a client where the token is requested.
      * @return The {@link LeaderToken} holding the information on the sequencer
@@ -297,7 +297,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
     /**
      * Returns the editor to offline mode.
      */
-    public void goOffline() {
+    private void goOffline() {
         //sets the Eventreplayer to offline mode
         ((AbstractDocument) textArea.getDocument()).setDocumentFilter(null);
 
