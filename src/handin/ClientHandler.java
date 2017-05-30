@@ -13,6 +13,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.LinkedList;
@@ -115,23 +116,19 @@ public class ClientHandler {
         return getSocketFromToken(leaderToken);
     }
 
-    private boolean isAlive(Pair<String, Integer> elected) {
-        if (weAreNewSequencer(elected)) return true;
-        else {
-            Client client = new Client(elected.getSecond());
-            Socket socket = client.connectToServer(elected.getFirst());
-            if (socket != null) {
+        private boolean isAlive(Pair<String, Integer> elected) {
+            if (weAreNewSequencer(elected)) return true;
+            else {
                 try {
+                    Socket socket = new Socket();
+                    socket.connect(new InetSocketAddress(elected.getFirst(),elected.getSecond()));
                     socket.close();
-                } catch (IOException ignored) {
+                } catch (Exception e) {
+                    return false;
                 }
                 return true;
-            } else {
-                System.out.println("Socket is null");
-                return false;
             }
         }
-    }
 
     private boolean weAreNewSequencer(Pair<String, Integer> elected) {
         System.out.println("Elected: " + elected);
