@@ -157,6 +157,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
         disconnect = new AbstractAction("disconnect") {
             public void actionPerformed(ActionEvent e) {
                 goOffline();
+                errorField.setText("No errors");
                 clientHandler.setOnline(false);
                 // Resets the listening connection
                 clientHandler.stop();
@@ -217,7 +218,7 @@ public class DistributedTextEditor extends JFrame implements Editor {
             @Override
             public void actionPerformed(ActionEvent e) {
                 //Get the leadertoken
-                setTitle("Connection...");
+                setTitle("Connecting");
                 LeaderToken token = getToken(getTargetIP());
 
                 if (token == null) {
