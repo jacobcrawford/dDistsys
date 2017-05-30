@@ -13,26 +13,21 @@ class InputHandler implements Runnable {
 
     private final ObjectInputStream stream;
     private final Queue<Event> eventQueue;
-    private final Boolean running;
     private final String ip;
     private final int port;
 
-    public InputHandler(ObjectInputStream stream, Queue<Event> eventQueue, Pair<String,Integer> clientInfo) {
+    public InputHandler(ObjectInputStream stream, Queue<Event> eventQueue, Pair<String, Integer> clientInfo) {
         this.ip = clientInfo.getFirst();
         this.port = clientInfo.getSecond();
-        running = true;
         this.stream = stream;
         this.eventQueue = eventQueue;
-
-        //Add the event that a new client has joined the list.
-
     }
 
     @Override
     public void run() {
         //receive and send to Queue
         try {
-            while (running) {
+            while (!Thread.interrupted()) {
                 MyTextEvent event = (MyTextEvent) stream.readObject();
                 eventQueue.add(event);
             }
@@ -40,6 +35,6 @@ class InputHandler implements Runnable {
             System.out.println("InputHandler going down");
         }
         //Add the event that a new client has joined the list.
-        eventQueue.add(new ClientListChangeEvent(ip,port,ClientListChangeEvent.remove));
+        eventQueue.add(new ClientListChangeEvent(ip, port, ClientListChangeEvent.remove));
     }
 }

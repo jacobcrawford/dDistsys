@@ -124,10 +124,10 @@ class OutputHandler {
                             //The old events begins before the new. only remove from the point that the old event stopped removing.
                             System.out.println(newEvent + "," + oldEvent + ": Case 1");
                             if (newEventOffset >= oldEventEndPoint) {
-                                newEvent.setOffset(newEventOffset-oldEvent.getLength());
+                                newEvent.setOffset(newEventOffset - oldEvent.getLength());
                             } else {
                                 newEvent.setOffset(oldEventEndPoint - oldEvent.getLength());
-                                newEvent.setLength(newEventEndPoint-oldEventEndPoint);
+                                newEvent.setLength(newEventEndPoint - oldEventEndPoint);
                             }
                         } else {
                             //The old event begins later in the text, only remove until the beginning of it
@@ -184,12 +184,14 @@ class OutputHandler {
 
     public synchronized void stop() {
         broadcastThread.interrupt();
-        for (ObjectOutputStream stream : outputStreams) {
-            try {
-                stream.close();
-            } catch (IOException e) {
-                System.out.println("Closing connection to client");
-                e.printStackTrace();
+        synchronized (outputStreams) {
+            for (ObjectOutputStream stream : outputStreams) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    System.out.println("Closing connection to client");
+                    e.printStackTrace();
+                }
             }
         }
     }
