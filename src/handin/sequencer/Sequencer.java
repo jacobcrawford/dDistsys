@@ -43,7 +43,6 @@ public class Sequencer {
             while (!Thread.interrupted()) try {
                 // Block until a socket is connected
                 Socket socket = server.waitForConnectionFromClient();
-                System.out.println("new client connected");
                 // Add the outputstream to the handler
                 ObjectOutputStream outputStream;
                 if (socket != null) {
@@ -70,6 +69,7 @@ public class Sequencer {
                     return;
                 }
 
+                System.out.println("new client connected"+clientInfo);
                 pushClientListOnNewClient(outputStream);
                 //Add client after the push so that it is not added twice
                 clientList.add(clientInfo);

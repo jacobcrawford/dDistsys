@@ -20,6 +20,7 @@ public class Client extends AbstractNetworkUnit {
             res = new Socket();
             res.connect(new InetSocketAddress(serverName, serverPortNumber), connectionTimeout);
         } catch (IOException e) {
+            System.out.println("Failed to connect a socket in Client");
             // We return null on IOExceptions
         }
         return res;

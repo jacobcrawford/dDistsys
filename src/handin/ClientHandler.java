@@ -76,6 +76,8 @@ public class ClientHandler {
      */
     private Socket handleServerCrash(String initialContent) {
         //allow remoteOutStrategy to send port once more.
+        number=0;
+        System.out.println("RELEASE");
         semaphore.release();
         System.out.println("Print clients");
         for (Pair p : clientList) System.out.println(p.getFirst() + " " + p.getSecond());
@@ -121,14 +123,15 @@ public class ClientHandler {
             else {
                 try {
                     Socket socket = new Socket();
-                    socket.connect(new InetSocketAddress(elected.getFirst(),elected.getSecond()));
+                    socket.connect(new InetSocketAddress(elected.getFirst(), elected.getSecond()));
                     socket.close();
-                } catch (Exception e) {
+                } catch (IOException ignored) {
+                    System.out.println("Failed in is alive");
                     return false;
                 }
                 return true;
             }
-        }
+    }
 
     private boolean weAreNewSequencer(Pair<String, Integer> elected) {
         System.out.println("Elected: " + elected);
@@ -208,7 +211,9 @@ public class ClientHandler {
 
     public void stop() {
         try {
-
+            tokenHandlerThread.interrupt();
+            tokenThreadHandler.closeTokenSocket();
+            communicationThread.interrupt();
             if (socket != null) socket.close();
             localReplayThread.interrupt();
             onlineReplayThread.interrupt();
@@ -254,12 +259,12 @@ public class ClientHandler {
                                 System.out.println("added " + client.getFirst() + " " + client.getSecond());
                                 break;
                             } else {
-                                System.out.println("client already in list");
+                                System.out.println("client already in list"+ client.getFirst()+client.getSecond());
                                 break;
                             }
                         case ClientListChangeEvent.REMOVE:
                             clientList.remove(client);
-                            System.out.println("removed");
+                            System.out.println("removed"+client);
                             break;
                         default:
                             System.out.println("Bad ClientListChangeEvent received");

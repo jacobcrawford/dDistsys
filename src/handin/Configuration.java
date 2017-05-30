@@ -8,7 +8,7 @@ import java.util.Enumeration;
 public class Configuration {
     public static final int connectionTimeout = 10000;
     public static final int waitForNewClientToConnectTimeout = 50;
-    static final int[] portRange = {10000, 10999};
+    static final int[] portRange = {10000, 10010};
     static final int serverPort = 40499;
     static final int connectionAttemptsToNewSequencer = 10;
     static final int waitPerConnectionAttempt = 100;

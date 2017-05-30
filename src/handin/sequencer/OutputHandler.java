@@ -211,6 +211,7 @@ class OutputHandler {
         try {
             Thread.sleep(handin.Configuration.waitForNewClientToConnectTimeout);
         } catch (InterruptedException ignored) {
+            System.out.println("Client timed out");
         }
     }
 

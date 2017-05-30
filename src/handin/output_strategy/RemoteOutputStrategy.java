@@ -21,7 +21,9 @@ public class RemoteOutputStrategy implements OutputStrategy {
         out = createOutputStream();
         try {
             //Write client info to the sequencer
+            System.out.println("ACQUIREING SMP");
             semaphore.acquire();
+            System.out.println("DONE ACQUIREING SMP");
             int port = clientHandler.getListenPort();
             if (out != null)
                 out.writeObject(new Pair<>(Configuration.getIP(), port));
