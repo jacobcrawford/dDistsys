@@ -6,9 +6,7 @@ import java.net.Socket;
 
 import static handin.Configuration.connectionTimeout;
 
-/**
- * Made by Rasmus on 05/04/2017.
- */
+
 public class Client extends AbstractNetworkUnit {
 
     public Client(int portNumber) {

@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Queue;
 
-public class InputHandler implements Runnable {
+class InputHandler implements Runnable {
 
     private final ObjectInputStream stream;
     private final Queue<Event> eventQueue;

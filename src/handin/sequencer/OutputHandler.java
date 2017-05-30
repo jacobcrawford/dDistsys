@@ -16,14 +16,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
-public class OutputHandler {
+class OutputHandler {
 
     private final HashMap<Integer, MyTextEvent> pastTextEvents;
     private final BlockingQueue<Event> eventQueue;
     private final List<ObjectOutputStream> outputStreams;
     private int number = 0;
     private Thread broadcastThread;
-    private Sequencer sequencer;
+    private final Sequencer sequencer;
 
     public OutputHandler(BlockingQueue<Event> eventQueue, Sequencer sequencer) {
         this.sequencer = sequencer;
@@ -118,9 +118,9 @@ public class OutputHandler {
                 } else if (oldEvent instanceof TextRemoveEvent) {
 
                     if (newEvent instanceof TextRemoveEvent) {
-                        // the removeevents overlap, change length/offset, so that we dont double remove
+                        // the remove events overlap, change length/offset, so that we don't double remove
                         if (newEventOffset >= oldEventOffset) {
-                            //The oldevents begins before the new. only remove from the point that the old event stopped removing.
+                            //The old events begins before the new. only remove from the point that the old event stopped removing.
                             System.out.println(newEvent + "," + oldEvent + ": Case 1");
                             if (newEventOffset >= oldEventEndPoint) {
                                 newEvent.setOffset(newEventOffset-oldEvent.getLength());
@@ -129,7 +129,7 @@ public class OutputHandler {
                                 newEvent.setLength(newEventEndPoint-oldEventEndPoint);
                             }
                         } else {
-                            //The old revent begins later in the text, only remove until the beginning of it
+                            //The old event begins later in the text, only remove until the beginning of it
                             System.out.println(newEvent + "," + oldEvent + ": Case 2");
                             newEvent.setLength(oldEventOffset - newEventOffset);
                             //the old event doesn't remove all the way to the end of the new event, take care of the tail.
