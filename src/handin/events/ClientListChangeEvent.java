@@ -3,8 +3,8 @@ package handin.events;
 import java.io.Serializable;
 
 public class ClientListChangeEvent implements Event, Serializable {
-    public static final String remove = "REMOVE";
-    public static final String add = "ADD";
+    public static final String REMOVE = "REMOVE";
+    public static final String ADD = "ADD";
     private final String ip;
     private final int port;
     private final String event;

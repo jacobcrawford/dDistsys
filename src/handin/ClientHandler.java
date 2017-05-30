@@ -1,12 +1,12 @@
 package handin;
 
 import handin.communication.Client;
-import handin.events.ClientListChangeEvent;
 import handin.communication.Server;
+import handin.events.ClientListChangeEvent;
+import handin.events.MyTextEvent;
 import handin.output_strategy.FilterIgnoringOutputStrategy;
 import handin.output_strategy.OutputStrategy;
 import handin.output_strategy.RemoteOutputStrategy;
-import handin.events.MyTextEvent;
 
 import javax.swing.*;
 import java.io.EOFException;
@@ -251,7 +251,7 @@ public class ClientHandler {
                     ClientListChangeEvent e = (ClientListChangeEvent) o;
                     Pair<String, Integer> client = new Pair<>(e.getIp(), e.getPort());
                     switch (e.getEvent()) {
-                        case "ADD":
+                        case ClientListChangeEvent.ADD:
                             if (!clientList.contains(client)) {
                                 clientList.add(client);
                                 System.out.println("added " + client.getFirst() + " " + client.getSecond());
@@ -260,8 +260,7 @@ public class ClientHandler {
                                 System.out.println("client already in list");
                                 break;
                             }
-
-                        case "REMOVE":
+                        case ClientListChangeEvent.REMOVE:
                             clientList.remove(client);
                             System.out.println("removed");
                             break;
@@ -271,7 +270,6 @@ public class ClientHandler {
                 } else {
                     System.out.println("Unreadable object received");
                 }
-
             }
             fromSequencer.close();
 

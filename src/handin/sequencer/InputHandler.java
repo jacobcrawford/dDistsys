@@ -11,11 +11,11 @@ import java.util.Queue;
 
 class InputHandler implements Runnable {
 
+    private static int idCount;
     private final ObjectInputStream stream;
     private final Queue<Event> eventQueue;
     private final String ip;
     private final int port;
-    private static int idCount;
     private int id;
 
     public InputHandler(ObjectInputStream stream, Queue<Event> eventQueue, Pair<String, Integer> clientInfo) {
@@ -39,7 +39,7 @@ class InputHandler implements Runnable {
             System.out.println("InputHandler going down");
         }
         //Add the event that a new client has joined the list.
-        Event lastEvent = new ClientListChangeEvent(ip,port,ClientListChangeEvent.remove);
+        Event lastEvent = new ClientListChangeEvent(ip, port, ClientListChangeEvent.REMOVE);
         lastEvent.setID(id);
         eventQueue.add(lastEvent);
     }

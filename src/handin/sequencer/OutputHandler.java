@@ -78,10 +78,10 @@ class OutputHandler {
             cleanup();
         } else if (newEvent instanceof ClientListChangeEvent) {
             ClientListChangeEvent event = (ClientListChangeEvent) newEvent;
-            if (event.getEvent().equals(ClientListChangeEvent.remove)) {
+            if (event.getEvent().equals(ClientListChangeEvent.REMOVE)) {
                 clientVersion.remove(event.getID());
                 cleanup();
-            } else if (event.getEvent().equals(ClientListChangeEvent.add)) {
+            } else if (event.getEvent().equals(ClientListChangeEvent.ADD)) {
                 clientVersion.put(event.getID(), -1);
             }
         }
@@ -115,7 +115,7 @@ class OutputHandler {
                     + (((TextRemoveEvent) event)).getLength());
         } else if (event instanceof ClientListChangeEvent) {
             ClientListChangeEvent changeEvent = (ClientListChangeEvent) event;
-            if (changeEvent.getEvent().equals(ClientListChangeEvent.remove)) {
+            if (changeEvent.getEvent().equals(ClientListChangeEvent.REMOVE)) {
                 sequencer.removeClient(changeEvent);
             }
         }
@@ -156,9 +156,9 @@ class OutputHandler {
                 } else if (oldEvent instanceof TextRemoveEvent) {
 
                     if (newEvent instanceof TextRemoveEvent) {
-                        // the remove events overlap, change length/offset, so that we don't double remove
+                        // the REMOVE events overlap, change length/offset, so that we don't double REMOVE
                         if (newEventOffset >= oldEventOffset) {
-                            //The old events begins before the new. only remove from the point that the old event stopped removing.
+                            //The old events begins before the new. only REMOVE from the point that the old event stopped removing.
                             if (newEventOffset >= oldEventEndPoint) {
                                 newEvent.setOffset(newEventOffset - oldEvent.getLength());
                             } else {
@@ -166,9 +166,9 @@ class OutputHandler {
                                 newEvent.setLength(newEventEndPoint - oldEventEndPoint);
                             }
                         } else {
-                            //The old event begins later in the text, only remove until the beginning of it
+                            //The old event begins later in the text, only REMOVE until the beginning of it
                             newEvent.setLength(oldEventOffset - newEventOffset);
-                            //the old event doesn't remove all the way to the end of the new event, take care of the tail.
+                            //the old event doesn't REMOVE all the way to the end of the new event, take care of the tail.
                             if (oldEventEndPoint < newEventEndPoint) {
                                 // Implicit that extraEventOffSet = oldEventOffset;
                                 int extraEventLength = newEventEndPoint - oldEventEndPoint;

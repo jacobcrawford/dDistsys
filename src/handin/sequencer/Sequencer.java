@@ -76,7 +76,7 @@ public class Sequencer {
                 // Create an inputhandler
                 InputHandler inputHandler = new InputHandler(inputStream, eventQueue, clientInfo);
                 //Add the ADDEvent to the queue
-                Event event = new ClientListChangeEvent(clientInfo.getFirst(), clientInfo.getSecond(), ClientListChangeEvent.add);
+                Event event = new ClientListChangeEvent(clientInfo.getFirst(), clientInfo.getSecond(), ClientListChangeEvent.ADD);
                 event.setID(inputHandler.getId());
                 outputHandler.addClient(outputStream);
                 eventQueue.add(event);
@@ -118,14 +118,13 @@ public class Sequencer {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
         }
     }
 
     public void stop() {
+        listenThread.interrupt();
         outputHandler.stop();
         server.deregisterOnPort();
-        listenThread.interrupt();
     }
 
     private LinkedList<Pair<String, Integer>> getClientList() {
