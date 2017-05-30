@@ -43,9 +43,10 @@ class OutputHandler {
             while (!Thread.interrupted()) {
                 try {
                     event = eventQueue.take();
-                    cleanHistory(event);
+                    int oldNumber = 0;
                     if (event instanceof MyTextEvent) {
                         MyTextEvent textEvent = (MyTextEvent) event;
+                        oldNumber = textEvent.getNumber();
                         if (textEvent.getNumber() < number) {
                             adjustOffset(textEvent);
                         }
@@ -54,6 +55,7 @@ class OutputHandler {
                         //remember past events..
                         pastTextEvents.put(textEvent.getNumber(), textEvent);
                     }
+                    cleanHistory(event,oldNumber);
                 } catch (InterruptedException e) {
                     System.out.println("OutputHandler stopped");
                 }
@@ -64,10 +66,10 @@ class OutputHandler {
         broadcastThread.start();
     }
 
-    private void cleanHistory(Event newEvent) {
+    private void cleanHistory(Event newEvent,int oldNumber) {
         if (newEvent instanceof TextInsertEvent || newEvent instanceof TextRemoveEvent) {
             MyTextEvent event = (MyTextEvent) newEvent;
-            clientVersion.put(event.getID(),event.getNumber());
+            clientVersion.put(event.getID(),oldNumber);
             cleanup();
         } else if (newEvent instanceof ClientListChangeEvent) {
             ClientListChangeEvent event = (ClientListChangeEvent) newEvent;

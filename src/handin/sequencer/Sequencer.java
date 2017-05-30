@@ -50,6 +50,7 @@ public class Sequencer {
                     outputStream = new ObjectOutputStream((socket.getOutputStream()));
                 } else {
                     return;
+
                 }
 
                 // Tell the outputHandler that a new client is connecting, so it stops broadcasting temporarily
