@@ -250,15 +250,17 @@ public class DistributedTextEditor extends JFrame implements Editor {
         for (int port = portRange[0]; port <= portRange[1]; port++) {
             System.out.println("Trying " + port);
             Client client = new Client(port);
-            try (Socket tokenSocket = client.connectToServer(hostname)){
+            try (Socket tokenSocket = client.connectToServer(hostname)) {
                 if (tokenSocket != null) {
                     ObjectInputStream tokenGetter = new ObjectInputStream(tokenSocket.getInputStream());
                     Object receivedObject = tokenGetter.readObject();
                     if (receivedObject instanceof LeaderToken) {
                         return (LeaderToken) receivedObject;
-                    }else{
+                    } else if (receivedObject == null) {
+                        return null;
+                    } else {
                         System.out.println("This was received: " + receivedObject.getClass());
-                        System.out.println("OBJECT WAS NOT A TOKEN" );
+                        System.out.println("OBJECT WAS NOT A TOKEN");
                     }
                 }
             } catch (IOException | ClassNotFoundException e) {
